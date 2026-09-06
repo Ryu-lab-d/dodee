@@ -9,6 +9,7 @@ const thisMonth = () => new Date().toISOString().slice(0, 7);
 export default function MeterReadingsPage() {
   const [month, setMonth] = useState(thisMonth());
   const [rows, setRows] = useState<PendingRoomReading[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [waterCurrent, setWaterCurrent] = useState('');
   const [electricityCurrent, setElectricityCurrent] = useState('');
@@ -20,7 +21,8 @@ export default function MeterReadingsPage() {
     api
       .get<PendingRoomReading[]>(`/meter-readings/pending?month=${month}`)
       .then(setRows)
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     load();
@@ -160,7 +162,12 @@ export default function MeterReadingsPage() {
                 )}
               </Fragment>
             ))}
-            {rows.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">กำลังโหลด...</td>
+              </tr>
+            )}
+            {!loading && rows.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
                   ยังไม่มีห้องให้จดมิเตอร์

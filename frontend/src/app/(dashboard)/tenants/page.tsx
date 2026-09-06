@@ -8,6 +8,7 @@ import { Tenant, Room } from '@/lib/types';
 export default function TenantsPage() {
   const { user } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
   const [vacantRooms, setVacantRooms] = useState<Room[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [roomId, setRoomId] = useState('');
@@ -20,7 +21,11 @@ export default function TenantsPage() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    api.get<Tenant[]>('/tenants').then(setTenants).catch((err) => setError(err.message));
+    api
+      .get<Tenant[]>('/tenants')
+      .then(setTenants)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
     api
       .get<Room[]>('/rooms')
       .then((rooms) => setVacantRooms(rooms.filter((r) => r.status === 'ว่าง')))
@@ -173,7 +178,12 @@ export default function TenantsPage() {
                 <td className="px-4 py-2 text-slate-600">{t.status}</td>
               </tr>
             ))}
-            {tenants.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
+              </tr>
+            )}
+            {!loading && tenants.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400">ยังไม่มีผู้เช่า</td>
               </tr>

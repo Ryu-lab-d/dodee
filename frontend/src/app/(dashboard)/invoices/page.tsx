@@ -24,6 +24,7 @@ const STATUS_LABEL: Record<InvoiceStatus, string> = {
 export default function InvoicesPage() {
   const [month, setMonth] = useState(thisMonth());
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -38,7 +39,8 @@ export default function InvoicesPage() {
     api
       .get<Invoice[]>(`/invoices?billingMonth=${month}`)
       .then(setInvoices)
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     load();
@@ -243,7 +245,12 @@ export default function InvoicesPage() {
                 )}
               </Fragment>
             ))}
-            {invoices.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={8} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
+              </tr>
+            )}
+            {!loading && invoices.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-slate-400">ยังไม่มีใบเรียกเก็บของเดือนนี้</td>
               </tr>

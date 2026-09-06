@@ -35,6 +35,7 @@ export default function ReportsPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertyId, setPropertyId] = useState('');
   const [transactions, setTransactions] = useState<AppTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +51,11 @@ export default function ReportsPage() {
   const query = `month=${month}${propertyId ? `&propertyId=${propertyId}` : ''}`;
 
   const load = () => {
-    api.get<AppTransaction[]>(`/transactions?${query}`).then(setTransactions).catch((err) => setError(err.message));
+    api
+      .get<AppTransaction[]>(`/transactions?${query}`)
+      .then(setTransactions)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
     api.get<FinancialSummary>(`/transactions/summary?${query}`).then(setSummary).catch(() => {});
   };
 
@@ -280,7 +285,12 @@ export default function ReportsPage() {
                 </td>
               </tr>
             ))}
-            {transactions.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
+              </tr>
+            )}
+            {!loading && transactions.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-slate-400">ยังไม่มีรายการของเดือนนี้</td>
               </tr>

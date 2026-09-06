@@ -13,6 +13,7 @@ import LocationFields, { emptyLocation, LocationValue } from '@/components/Locat
 export default function PropertiesPage() {
   const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
@@ -23,7 +24,11 @@ export default function PropertiesPage() {
   const [saving, setSaving] = useState(false);
 
   const load = () =>
-    api.get<Property[]>('/properties?category=hostel').then(setProperties).catch((err) => setError(err.message));
+    api
+      .get<Property[]>('/properties?category=hostel')
+      .then(setProperties)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     load();
@@ -146,7 +151,8 @@ export default function PropertiesPage() {
             </div>
           </Link>
         ))}
-        {properties.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีหอพัก</p>}
+        {loading && <p className="text-sm text-slate-400">กำลังโหลด...</p>}
+        {!loading && properties.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีหอพัก</p>}
       </div>
     </div>
   );

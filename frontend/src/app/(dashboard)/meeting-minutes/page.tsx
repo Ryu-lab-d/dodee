@@ -168,13 +168,19 @@ function CreateMeetingModal({
 export default function MeetingMinutesPage() {
   const { user } = useAuth();
   const [minutes, setMinutes] = useState<MeetingMinute[]>([]);
+  const [loading, setLoading] = useState(true);
   const [colleagues, setColleagues] = useState<User[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [successInfo, setSuccessInfo] = useState<{ minute: MeetingMinute; time: string } | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => api.get<MeetingMinute[]>('/meeting-minutes').then(setMinutes).catch((err) => setError(err.message));
+  const load = () =>
+    api
+      .get<MeetingMinute[]>('/meeting-minutes')
+      .then(setMinutes)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     load();
@@ -240,7 +246,8 @@ export default function MeetingMinutesPage() {
             )}
           </div>
         ))}
-        {minutes.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบันทึกการประชุม</p>}
+        {loading && <p className="text-sm text-slate-400">กำลังโหลด...</p>}
+        {!loading && minutes.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบันทึกการประชุม</p>}
       </div>
 
       {showCreate && (

@@ -19,6 +19,7 @@ const STATUS_STYLE: Record<RoomStatus, string> = {
 export default function HousesPage() {
   const { user } = useAuth();
   const [houses, setHouses] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState<'บ้าน' | 'คอนโด'>('บ้าน');
@@ -31,7 +32,11 @@ export default function HousesPage() {
   const [saving, setSaving] = useState(false);
 
   const load = () =>
-    api.get<Property[]>('/properties?category=single').then(setHouses).catch((err) => setError(err.message));
+    api
+      .get<Property[]>('/properties?category=single')
+      .then(setHouses)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     load();
@@ -189,7 +194,8 @@ export default function HousesPage() {
             </Link>
           );
         })}
-        {houses.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบ้าน/คอนโด</p>}
+        {loading && <p className="text-sm text-slate-400">กำลังโหลด...</p>}
+        {!loading && houses.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบ้าน/คอนโด</p>}
       </div>
     </div>
   );

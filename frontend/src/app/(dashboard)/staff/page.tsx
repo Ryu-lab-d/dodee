@@ -123,6 +123,7 @@ export default function StaffPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [assigningUser, setAssigningUser] = useState<User | null>(null);
@@ -140,7 +141,11 @@ export default function StaffPage() {
   }, [user, router]);
 
   const load = () => {
-    api.get<User[]>('/users').then(setUsers).catch((err) => setError(err.message));
+    api
+      .get<User[]>('/users')
+      .then(setUsers)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
     api.get<Property[]>('/properties?category=hostel').then((hostels) =>
       api.get<Property[]>('/properties?category=single').then((singles) => setProperties([...hostels, ...singles]))
     );
@@ -323,7 +328,12 @@ export default function StaffPage() {
                 </td>
               </tr>
             ))}
-            {users.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
+              </tr>
+            )}
+            {!loading && users.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400">ยังไม่มีพนักงาน</td>
               </tr>
