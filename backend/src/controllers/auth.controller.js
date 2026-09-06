@@ -1,0 +1,73 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
+const asyncHandler = require('../utils/asyncHandler');
+const { logActivity } = require('../utils/activityLog');
+
+const signToken = (user) =>
+  jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
+
+const login = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ message: 'username and password are required' });
+  }
+
+  const user = await User.findOne({ where: { username } });
+  if (!user || user.status !== 'active') {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  const token = signToken(user);
+  res.json({
+    token,
+    user: { id: user.id, username: user.username, name: user.name, role: user.role },
+  });
+});
+
+// Owner-only: create staff/accountant accounts.
+const register = asyncHandler(async (req, res) => {
+  const { username, password, name, email, phone, role } = req.body;
+  if (!username || !password || !name || !role) {
+    return res.status(400).json({ message: 'username, password, name and role are required' });
+  }
+  if (!['staff', 'accountant', 'owner'].includes(role)) {
+    return res.status(400).json({ message: 'Invalid role' });
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+  const user = await User.create({ username, password: hashed, name, email, phone, role });
+  logActivity(req.user, 'create_user', `สร้างบัญชีพนักงาน "${name}" (${role})`);
+  res.status(201).json({ id: user.id, username: user.username, name: user.name, role: user.role });
+});
+
+const me = asyncHandler(async (req, res) => {
+  const { id, username, name, email, phone, role, status, lineUserId, lineLinkCode } = req.user;
+  res.json({ id, username, name, email, phone, role, status, lineUserId, lineLinkCode });
+});
+
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'currentPassword และ newPassword จำเป็นต้องกรอก' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' });
+  }
+
+  const match = await bcrypt.compare(currentPassword, req.user.password);
+  if (!match) return res.status(401).json({ message: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' });
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  await req.user.update({ password: hashed });
+  res.status(200).json({ ok: true });
+});
+
+module.exports = { login, register, me, changePassword };
