@@ -252,7 +252,7 @@ export default function AboutPage() {
                 heroIn ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
               }`}
             >
-              <Image src="/icon.png" alt="Do Dee" width={256} height={256} className="h-16 w-16" priority />
+              <Image src="/icon.png" alt="Do Dee" width={256} height={256} className="h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36" priority />
             </div>
             <h1
               className={`text-3xl font-extrabold leading-tight text-slate-900 transition-all delay-150 duration-700 ease-out sm:text-4xl lg:text-5xl ${
