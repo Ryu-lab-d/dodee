@@ -24,6 +24,7 @@ import {
   ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
+import CountUp from '@/components/CountUp';
 
 function Reveal({
   children,
@@ -245,14 +246,28 @@ export default function AboutPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-sky-50 to-white px-5 pb-16 pt-14 sm:pt-20">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 lg:flex-row lg:items-center">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="blob-drift absolute -left-24 -top-16 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
+          <div
+            className="blob-drift absolute -right-16 top-24 h-80 w-80 rounded-full bg-sky-300/30 blur-3xl"
+            style={{ animationDelay: '2s' }}
+          />
+          <div
+            className="blob-drift absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-blue-100/50 blur-3xl"
+            style={{ animationDelay: '4s' }}
+          />
+        </div>
+
+        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-10 lg:flex-row lg:items-center">
           <div className="flex-1 text-center lg:text-left">
             <div
               className={`mx-auto mb-6 w-fit transition-all duration-700 ease-out lg:mx-0 ${
                 heroIn ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
               }`}
             >
-              <Image src="/icon.png" alt="Do Dee" width={256} height={256} className="h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36" priority />
+              <div className="float-slow">
+                <Image src="/icon.png" alt="Do Dee" width={256} height={256} className="h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36" priority />
+              </div>
             </div>
             <h1
               className={`text-3xl font-extrabold leading-tight text-slate-900 transition-all delay-150 duration-700 ease-out sm:text-4xl lg:text-5xl ${
@@ -278,17 +293,36 @@ export default function AboutPage() {
             >
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700"
+                className="btn-press flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700"
               >
                 เข้าสู่ระบบ Do Dee
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="#features"
-                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                className="btn-press rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
               >
                 ดูฟีเจอร์ทั้งหมด
               </a>
+            </div>
+
+            <div
+              className={`mt-10 grid grid-cols-3 gap-4 border-t border-slate-200/70 pt-6 transition-all delay-500 duration-700 ease-out sm:max-w-md lg:mx-0 ${
+                heroIn ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+              }`}
+            >
+              {[
+                { value: MODULES.length, label: 'โมดูลจัดการครบวงจร' },
+                { value: 3, label: 'ระดับสิทธิ์การใช้งาน' },
+                { value: 2, label: 'แพลตฟอร์ม คอม & มือถือ' },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className="text-2xl font-extrabold text-blue-700 sm:text-3xl">
+                    <CountUp value={s.value} durationMs={1000} />
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -297,7 +331,9 @@ export default function AboutPage() {
               heroIn ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
             }`}
           >
-            <DashboardMockup />
+            <div className="float-slow-delay">
+              <DashboardMockup />
+            </div>
           </div>
         </div>
       </section>
@@ -338,15 +374,16 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">ดีกว่าสมุดจดและระบบทั่วไปอย่างไร</h2>
           </Reveal>
 
-          <Reveal className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 bg-slate-900 px-5 py-3 text-sm font-semibold text-white sm:gap-6">
               <span>คุณสมบัติ</span>
               <span className="w-16 text-center text-blue-300 sm:w-24">Do Dee</span>
               <span className="w-16 text-center text-slate-400 sm:w-24">สมุดจด / ระบบทั่วไป</span>
             </div>
             {COMPARISON.map((row, i) => (
-              <div
+              <Reveal
                 key={row.label}
+                delayMs={i * 80}
                 className={`grid grid-cols-[1fr_auto_auto] items-center gap-2 px-5 py-3.5 text-sm sm:gap-6 ${
                   i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
                 }`}
@@ -358,9 +395,9 @@ export default function AboutPage() {
                 <span className="flex w-16 justify-center sm:w-24">
                   <X className="h-5 w-5 rounded-full bg-red-100 p-1 text-red-500" />
                 </span>
-              </div>
+              </Reveal>
             ))}
-          </Reveal>
+          </div>
 
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
@@ -392,21 +429,29 @@ export default function AboutPage() {
         <div className="mt-12 grid grid-cols-1 items-start gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <Reveal className="sm:col-span-2 lg:col-span-2">
             <p className="mb-3 text-center text-sm font-medium text-slate-500">แดชบอร์ดภาพรวมธุรกิจ</p>
-            <DashboardMockup />
+            <div className="float-slow">
+              <DashboardMockup />
+            </div>
           </Reveal>
-          <Reveal>
+          <Reveal delayMs={100}>
             <p className="mb-3 text-center text-sm font-medium text-slate-500">ใบแจ้งหนี้อัตโนมัติ</p>
-            <InvoiceMockup />
+            <div className="float-slow-delay">
+              <InvoiceMockup />
+            </div>
           </Reveal>
-          <Reveal>
+          <Reveal delayMs={200}>
             <p className="mb-3 text-center text-sm font-medium text-slate-500">แจ้งเตือนผ่าน LINE</p>
-            <LineCardMockup />
+            <div className="float-slow">
+              <LineCardMockup />
+            </div>
           </Reveal>
         </div>
-        <Reveal className="mt-8 flex justify-center">
+        <Reveal className="mt-8 flex justify-center" delayMs={100}>
           <div>
             <p className="mb-3 text-center text-sm font-medium text-slate-500">หน้าจอบนมือถือ</p>
-            <PhoneMockup />
+            <div className="float-slow-delay">
+              <PhoneMockup />
+            </div>
           </div>
         </Reveal>
       </section>

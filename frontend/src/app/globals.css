@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 @theme inline {
   --font-sans: var(--font-thai);
 }
@@ -161,6 +165,37 @@ button:not(:disabled):active {
 }
 .shake-x {
   animation: shake-x 0.4s ease-in-out;
+}
+
+/* Gentle continuous bob for hero art / mockups on the /about page. */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.float-slow {
+  animation: float-slow 4.5s ease-in-out infinite;
+}
+.float-slow-delay {
+  animation: float-slow 4.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+/* Slow drifting gradient blobs used as decorative hero backdrop. */
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -24px) scale(1.08); }
+  66% { transform: translate(-16px, 14px) scale(0.96); }
+}
+.blob-drift {
+  animation: blob-drift 12s ease-in-out infinite;
+}
+
+/* Press feedback for link-styled CTAs (buttons already get this globally). */
+.btn-press {
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
 }
 
 /* iOS-style bottom sheet for the mobile "More" menu */
