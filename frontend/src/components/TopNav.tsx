@@ -44,7 +44,14 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-10 border-b border-blue-100 bg-white/90 backdrop-blur print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4">
-        <Image src="/logo.png" alt="DoDee" width={200} height={145} className="h-10 w-auto md:h-16" priority />
+        <Image
+          src="/logo.png"
+          alt="DoDee"
+          width={200}
+          height={145}
+          className="logo-breathe h-14 w-auto md:h-24"
+          priority
+        />
         <div className="flex items-center gap-2 md:gap-4">
           <NotificationBell />
           <div className="hidden text-right md:block">
@@ -61,22 +68,22 @@ export default function TopNav() {
         </div>
       </div>
 
-      <nav className="mx-auto hidden max-w-6xl flex-wrap gap-3 px-6 pb-4 md:flex">
+      <nav className="mx-auto hidden max-w-6xl flex-wrap justify-center gap-x-7 gap-y-4 px-6 pb-6 md:flex lg:gap-x-9">
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
           return (
             <Link key={item.href} href={item.href} className="group flex flex-col items-center gap-2">
               <span
-                className={`flex h-20 w-20 items-center justify-center rounded-[1.5rem] border transition-all duration-150 ${
+                className={`flex h-24 w-24 items-center justify-center rounded-[1.75rem] border transition-all duration-150 lg:h-28 lg:w-28 ${
                   active
                     ? 'border-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-200'
                     : 'border-slate-100 bg-slate-50 text-slate-500 shadow-sm group-hover:-translate-y-0.5 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:shadow-md'
                 }`}
               >
-                <Icon className="h-9 w-9" strokeWidth={active ? 2.1 : 1.8} />
+                <Icon className="h-11 w-11 lg:h-12 lg:w-12" strokeWidth={active ? 2.1 : 1.8} />
               </span>
-              <span className={`text-xs font-medium ${active ? 'text-blue-700' : 'text-slate-500'}`}>
+              <span className={`text-sm font-medium ${active ? 'text-blue-700' : 'text-slate-500'}`}>
                 {item.label}
               </span>
             </Link>

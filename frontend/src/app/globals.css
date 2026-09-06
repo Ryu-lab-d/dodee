@@ -178,6 +178,15 @@ button:not(:disabled):active {
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
+/* Continuous soft breathing glow for the DoDee logo in the top nav. */
+@keyframes logo-breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 6px rgba(37, 99, 235, 0.12)); }
+  50% { transform: scale(1.06); filter: drop-shadow(0 6px 16px rgba(37, 99, 235, 0.32)); }
+}
+.logo-breathe {
+  animation: logo-breathe 3.2s ease-in-out infinite;
+}
+
 /* Gentle continuous bob for hero art / mockups on the /about page. */
 @keyframes float-slow {
   0%, 100% { transform: translateY(0); }
