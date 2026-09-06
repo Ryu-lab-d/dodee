@@ -18,7 +18,7 @@ export default function MeetingSuccessModal({
   return (
     <div className="success-backdrop fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="success-card w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
-        <Image src="/logo.png" alt="DoDee" width={172} height={152} className="mx-auto mb-4 h-10 w-auto" />
+        <Image src="/logo.png" alt="DoDee" width={200} height={145} className="mx-auto mb-4 h-10 w-auto" />
 
         <div className="success-circle mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
           <svg viewBox="0 0 24 24" className="h-10 w-10">

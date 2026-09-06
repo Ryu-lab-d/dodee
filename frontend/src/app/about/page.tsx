@@ -233,7 +233,7 @@ export default function AboutPage() {
     <div className="flex-1 bg-white text-slate-800">
       <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-          <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-9 w-auto" priority />
+          <Image src="/logo.png" alt="DoDee" width={200} height={145} className="h-9 w-auto" priority />
           <Link
             href="/login"
             className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
@@ -457,7 +457,7 @@ export default function AboutPage() {
 
       <footer className="border-t border-slate-100 px-5 py-8 text-center text-sm text-slate-400">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3">
-          <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-7 w-auto opacity-80" />
+          <Image src="/logo.png" alt="DoDee" width={200} height={145} className="h-7 w-auto opacity-80" />
           <p className="flex items-center gap-1.5">
             <ClipboardList className="h-3.5 w-3.5" />
             ระบบบริหารจัดการหอพัก อพาร์ตเมนต์ และคอนโด

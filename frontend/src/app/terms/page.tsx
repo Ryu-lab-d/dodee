@@ -114,7 +114,7 @@ export default function TermsPage() {
     <div className="flex flex-1 justify-center bg-sky-50 px-4 py-8">
       <div className="w-full max-w-2xl">
         <div className="mb-5 flex flex-col items-center">
-          <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-16 w-auto" priority />
+          <Image src="/logo.png" alt="DoDee" width={200} height={145} className="h-16 w-auto" priority />
           <p className="mt-2 text-sm text-slate-500">ยินดีต้อนรับ, {user?.name}</p>
         </div>
 

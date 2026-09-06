@@ -42,7 +42,7 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-10 border-b border-blue-100 bg-white/90 backdrop-blur print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4">
-        <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-10 w-auto md:h-16" priority />
+        <Image src="/logo.png" alt="DoDee" width={200} height={145} className="h-10 w-auto md:h-16" priority />
         <div className="flex items-center gap-2 md:gap-4">
           <NotificationBell />
           <div className="hidden text-right md:block">

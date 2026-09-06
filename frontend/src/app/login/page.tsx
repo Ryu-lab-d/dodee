@@ -34,7 +34,7 @@ function LoginForm() {
       className="w-full max-w-sm rounded-2xl border border-blue-100 bg-white p-8 shadow-sm"
     >
       <div className="mb-4 flex justify-center">
-        <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-16 w-auto" priority />
+        <Image src="/logo.png" alt="DoDee" width={200} height={145} className="h-16 w-auto" priority />
       </div>
       <p className="mb-6 text-center text-sm text-slate-500">ระบบจัดการหอพัก / บ้านเช่า / คอนโด</p>
 
