@@ -49,7 +49,7 @@ export default function TopNav() {
           alt="DoDee"
           width={200}
           height={145}
-          className="logo-breathe h-14 w-auto md:h-24"
+          className="logo-breathe h-10 w-auto md:h-16"
           priority
         />
         <div className="flex items-center gap-2 md:gap-4">
@@ -68,20 +68,23 @@ export default function TopNav() {
         </div>
       </div>
 
-      <nav className="mx-auto hidden max-w-6xl flex-wrap justify-center gap-x-7 gap-y-4 px-6 pb-6 md:flex lg:gap-x-9">
+      <nav
+        className="mx-auto hidden max-w-6xl gap-x-2 gap-y-5 px-6 pb-6 md:grid"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))' }}
+      >
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
           return (
-            <Link key={item.href} href={item.href} className="group flex flex-col items-center gap-2">
+            <Link key={item.href} href={item.href} className="group flex flex-col items-center justify-self-center gap-2">
               <span
-                className={`flex h-24 w-24 items-center justify-center rounded-[1.75rem] border transition-all duration-150 lg:h-28 lg:w-28 ${
+                className={`flex h-24 w-24 items-center justify-center rounded-[1.75rem] border transition-all duration-150 ${
                   active
                     ? 'border-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-200'
                     : 'border-slate-100 bg-slate-50 text-slate-500 shadow-sm group-hover:-translate-y-0.5 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:shadow-md'
                 }`}
               >
-                <Icon className="h-11 w-11 lg:h-12 lg:w-12" strokeWidth={active ? 2.1 : 1.8} />
+                <Icon className="h-11 w-11" strokeWidth={active ? 2.1 : 1.8} />
               </span>
               <span className={`text-sm font-medium ${active ? 'text-blue-700' : 'text-slate-500'}`}>
                 {item.label}
