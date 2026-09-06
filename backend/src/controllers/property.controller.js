@@ -1,24 +1,16 @@
-const { sequelize, Property, Room, Tenant, UserProperty } = require('../models');
+const { sequelize, Property, Room, Tenant, User, UserProperty } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
+const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
 
 const roomsWithTenants = { model: Room, as: 'rooms', include: [{ model: Tenant, as: 'tenants' }] };
 
 const SINGLE_UNIT_TYPES = ['บ้าน', 'คอนโด'];
 const isSingleUnit = (type) => SINGLE_UNIT_TYPES.includes(type);
 
-// Owners see every property they own; staff/accountant see only properties assigned to them.
-const scopeForUser = async (user) => {
-  if (user.role === 'owner') {
-    return { ownerId: user.id };
-  }
-  const assignments = await UserProperty.findAll({ where: { userId: user.id } });
-  const ids = assignments.map((a) => a.propertyId);
-  return { id: ids };
-};
-
 const list = asyncHandler(async (req, res) => {
-  const where = await scopeForUser(req.user);
+  const ids = await getAccessiblePropertyIds(req.user);
+  const where = { id: ids };
   if (req.query.type) where.type = req.query.type;
   if (req.query.category === 'hostel') where.type = 'หอพัก';
   if (req.query.category === 'single') where.type = SINGLE_UNIT_TYPES;
@@ -27,6 +19,9 @@ const list = asyncHandler(async (req, res) => {
 });
 
 const getOne = asyncHandler(async (req, res) => {
+  if (!(await canAccessProperty(req.user, req.params.id))) {
+    return res.status(404).json({ message: 'Property not found' });
+  }
   const property = await Property.findByPk(req.params.id, {
     include: [roomsWithTenants],
   });
@@ -93,6 +88,7 @@ const create = asyncHandler(async (req, res) => {
 const update = asyncHandler(async (req, res) => {
   const property = await Property.findByPk(req.params.id, { include: [roomsWithTenants] });
   if (!property) return res.status(404).json({ message: 'Property not found' });
+  if (property.ownerId !== req.user.id) return res.status(404).json({ message: 'Property not found' });
 
   const {
     name, type, address, subdistrict, district, province, postalCode, latitude, longitude,
@@ -122,6 +118,7 @@ const update = asyncHandler(async (req, res) => {
 const remove = asyncHandler(async (req, res) => {
   const property = await Property.findByPk(req.params.id);
   if (!property) return res.status(404).json({ message: 'Property not found' });
+  if (property.ownerId !== req.user.id) return res.status(404).json({ message: 'Property not found' });
   await property.destroy();
   logActivity(req.user, 'delete_property', `ลบทรัพย์สิน "${property.name}"`);
   res.status(204).send();
@@ -130,6 +127,14 @@ const remove = asyncHandler(async (req, res) => {
 const assignUser = asyncHandler(async (req, res) => {
   const { userId } = req.body;
   if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+  const property = await Property.findByPk(req.params.id);
+  if (!property || property.ownerId !== req.user.id) {
+    return res.status(404).json({ message: 'Property not found' });
+  }
+  const user = await User.findByPk(userId);
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
   const [assignment] = await UserProperty.findOrCreate({
     where: { userId, propertyId: req.params.id },
   });

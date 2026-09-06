@@ -1,14 +1,16 @@
 const { Tenant, Room } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
+const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
 
 const list = asyncHandler(async (req, res) => {
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
   const where = {};
   if (req.query.roomId) where.roomId = req.query.roomId;
   if (req.query.status) where.status = req.query.status;
   const tenants = await Tenant.findAll({
     where,
-    include: [{ model: Room, as: 'room' }],
+    include: [{ model: Room, as: 'room', where: { propertyId: accessibleIds }, required: true }],
     order: [['createdAt', 'DESC']],
   });
   res.json(tenants);
@@ -16,7 +18,9 @@ const list = asyncHandler(async (req, res) => {
 
 const getOne = asyncHandler(async (req, res) => {
   const tenant = await Tenant.findByPk(req.params.id, { include: [{ model: Room, as: 'room' }] });
-  if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+  if (!tenant || !(await canAccessProperty(req.user, tenant.room?.propertyId))) {
+    return res.status(404).json({ message: 'Tenant not found' });
+  }
   res.json(tenant);
 });
 
@@ -25,7 +29,9 @@ const create = asyncHandler(async (req, res) => {
   if (!roomId || !name) return res.status(400).json({ message: 'roomId and name are required' });
 
   const room = await Room.findByPk(roomId);
-  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (!room || !(await canAccessProperty(req.user, room.propertyId))) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
 
   const tenant = await Tenant.create({
     roomId, name, phone, email, idCard, moveInDate, contractEndDate, depositAmount,
@@ -36,8 +42,10 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const tenant = await Tenant.findByPk(req.params.id);
-  if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+  const tenant = await Tenant.findByPk(req.params.id, { include: [{ model: Room, as: 'room' }] });
+  if (!tenant || !(await canAccessProperty(req.user, tenant.room?.propertyId))) {
+    return res.status(404).json({ message: 'Tenant not found' });
+  }
 
   const { name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status } = req.body;
   await tenant.update({ name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status });
@@ -51,8 +59,10 @@ const update = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
-  const tenant = await Tenant.findByPk(req.params.id);
-  if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+  const tenant = await Tenant.findByPk(req.params.id, { include: [{ model: Room, as: 'room' }] });
+  if (!tenant || !(await canAccessProperty(req.user, tenant.room?.propertyId))) {
+    return res.status(404).json({ message: 'Tenant not found' });
+  }
   await tenant.destroy();
   res.status(204).send();
 });

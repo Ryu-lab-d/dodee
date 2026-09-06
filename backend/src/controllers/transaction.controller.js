@@ -78,6 +78,10 @@ const create = asyncHandler(async (req, res) => {
   if (!type || !category || !amount || !date || !propertyId) {
     return res.status(400).json({ message: 'type, category, amount, date และ propertyId จำเป็นต้องกรอก' });
   }
+  const propertyIds = await propertyIdsForUser(req.user);
+  if (!propertyIds.includes(propertyId)) {
+    return res.status(404).json({ message: 'Property not found' });
+  }
 
   const transaction = await Transaction.create({
     type, category, amount, date, description, propertyId, recordedBy: req.user.id,
@@ -87,7 +91,10 @@ const create = asyncHandler(async (req, res) => {
 
 const update = asyncHandler(async (req, res) => {
   const transaction = await Transaction.findByPk(req.params.id);
-  if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+  const propertyIds = await propertyIdsForUser(req.user);
+  if (!transaction || !propertyIds.includes(transaction.propertyId)) {
+    return res.status(404).json({ message: 'Transaction not found' });
+  }
 
   const { type, category, amount, date, description } = req.body;
   await transaction.update({ type, category, amount, date, description });
@@ -96,7 +103,10 @@ const update = asyncHandler(async (req, res) => {
 
 const remove = asyncHandler(async (req, res) => {
   const transaction = await Transaction.findByPk(req.params.id);
-  if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+  const propertyIds = await propertyIdsForUser(req.user);
+  if (!transaction || !propertyIds.includes(transaction.propertyId)) {
+    return res.status(404).json({ message: 'Transaction not found' });
+  }
   await transaction.destroy();
   res.status(204).send();
 });

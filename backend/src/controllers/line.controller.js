@@ -6,7 +6,8 @@ const webhook = async (req, res) => {
   const signature = req.headers['x-line-signature'];
   const secret = await lineService.getChannelSecret();
 
-  if (secret && !lineService.verifySignature(req.body, signature, secret)) {
+  // Fail closed: without a configured secret we cannot verify the request came from LINE.
+  if (!secret || !lineService.verifySignature(req.body, signature, secret)) {
     return res.status(401).send('invalid signature');
   }
 

@@ -54,7 +54,10 @@ const getOne = asyncHandler(async (req, res) => {
       { model: Payment, as: 'payments' },
     ],
   });
-  if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+  const propertyIds = await propertyIdsForUser(req.user);
+  if (!invoice || !propertyIds.includes(invoice.room?.propertyId)) {
+    return res.status(404).json({ message: 'Invoice not found' });
+  }
   const [withStatus] = await applyOverdueStatus([invoice]);
   res.json(withStatus);
 });

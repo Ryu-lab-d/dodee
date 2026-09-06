@@ -1,11 +1,15 @@
 const { Room, Tenant, Property } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
+const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
 
 const list = asyncHandler(async (req, res) => {
-  const where = {};
-  if (req.query.propertyId) where.propertyId = req.query.propertyId;
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
+  let propertyIds = accessibleIds;
+  if (req.query.propertyId) {
+    propertyIds = accessibleIds.includes(req.query.propertyId) ? [req.query.propertyId] : [];
+  }
   const rooms = await Room.findAll({
-    where,
+    where: { propertyId: propertyIds },
     include: [
       { model: Property, as: 'property', attributes: ['id', 'name'] },
       { model: Tenant, as: 'tenants', where: { status: 'เช่าอยู่' }, required: false },
@@ -22,7 +26,9 @@ const getOne = asyncHandler(async (req, res) => {
       { model: Tenant, as: 'tenants' },
     ],
   });
-  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (!room || !(await canAccessProperty(req.user, room.propertyId))) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
   res.json(room);
 });
 
@@ -33,6 +39,9 @@ const create = asyncHandler(async (req, res) => {
   } = req.body;
   if (!propertyId || !roomNumber) {
     return res.status(400).json({ message: 'propertyId and roomNumber are required' });
+  }
+  if (!(await canAccessProperty(req.user, propertyId))) {
+    return res.status(404).json({ message: 'Property not found' });
   }
 
   const room = await Room.create({
@@ -53,7 +62,9 @@ const create = asyncHandler(async (req, res) => {
 
 const update = asyncHandler(async (req, res) => {
   const room = await Room.findByPk(req.params.id);
-  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (!room || !(await canAccessProperty(req.user, room.propertyId))) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
 
   const { roomNumber, roomType, baseRentPrice, status, description, details, images } = req.body;
   await room.update({ roomNumber, roomType, baseRentPrice, status, description, details, images });
@@ -62,7 +73,9 @@ const update = asyncHandler(async (req, res) => {
 
 const remove = asyncHandler(async (req, res) => {
   const room = await Room.findByPk(req.params.id);
-  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (!room || !(await canAccessProperty(req.user, room.propertyId))) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
   await room.destroy();
   await Property.decrement('totalRooms', { by: 1, where: { id: room.propertyId } });
   res.status(204).send();

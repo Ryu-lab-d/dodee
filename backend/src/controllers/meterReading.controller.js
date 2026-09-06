@@ -1,13 +1,19 @@
 const { MeterReading, Room, Property } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
+const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
 
 const list = asyncHandler(async (req, res) => {
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
   const where = {};
   if (req.query.roomId) where.roomId = req.query.roomId;
 
   const readings = await MeterReading.findAll({
     where,
-    include: [{ model: Room, as: 'room', include: [{ model: Property, as: 'property', attributes: ['id', 'name'] }] }],
+    include: [{
+      model: Room, as: 'room', required: true,
+      where: { propertyId: accessibleIds },
+      include: [{ model: Property, as: 'property', attributes: ['id', 'name'] }],
+    }],
     order: [['readingDate', 'DESC']],
   });
   res.json(readings);
@@ -19,8 +25,12 @@ const getLatestForRoom = async (roomId) =>
 // Rooms + whether they already have a reading for the given month (YYYY-MM), for the "today's reading list" screen.
 const pending = asyncHandler(async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
-  const where = {};
-  if (req.query.propertyId) where.propertyId = req.query.propertyId;
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
+  let propertyIds = accessibleIds;
+  if (req.query.propertyId) {
+    propertyIds = accessibleIds.includes(req.query.propertyId) ? [req.query.propertyId] : [];
+  }
+  const where = { propertyId: propertyIds };
 
   const rooms = await Room.findAll({
     where,
@@ -50,7 +60,9 @@ const create = asyncHandler(async (req, res) => {
   }
 
   const room = await Room.findByPk(roomId);
-  if (!room) return res.status(404).json({ message: 'Room not found' });
+  if (!room || !(await canAccessProperty(req.user, room.propertyId))) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
 
   const previous = await getLatestForRoom(roomId);
   const waterPrevious = previous ? Number(previous.waterCurrent) : Number(room.meterWaterInitial);

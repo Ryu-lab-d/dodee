@@ -42,6 +42,9 @@ const register = asyncHandler(async (req, res) => {
   if (!['staff', 'accountant', 'owner'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role' });
   }
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
+  }
 
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({ username, password: hashed, name, email, phone, role });

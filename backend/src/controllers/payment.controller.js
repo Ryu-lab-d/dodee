@@ -1,11 +1,20 @@
 const { sequelize, Payment, Invoice, Room, Transaction } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
+const { getAccessiblePropertyIds } = require('../utils/scope');
 
 const list = asyncHandler(async (req, res) => {
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
   const where = {};
   if (req.query.invoiceId) where.invoiceId = req.query.invoiceId;
-  const payments = await Payment.findAll({ where, order: [['paymentDate', 'DESC']] });
+  const payments = await Payment.findAll({
+    where,
+    include: [{
+      model: Invoice, as: 'invoice', required: true,
+      include: [{ model: Room, as: 'room', required: true, where: { propertyId: accessibleIds } }],
+    }],
+    order: [['paymentDate', 'DESC']],
+  });
   res.json(payments);
 });
 
@@ -16,7 +25,10 @@ const create = asyncHandler(async (req, res) => {
   }
 
   const invoice = await Invoice.findByPk(invoiceId, { include: [{ model: Room, as: 'room' }] });
-  if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
+  if (!invoice || !accessibleIds.includes(invoice.room?.propertyId)) {
+    return res.status(404).json({ message: 'Invoice not found' });
+  }
   if (invoice.status === 'paid') return res.status(409).json({ message: 'ใบเรียกเก็บนี้ชำระแล้ว' });
 
   const payment = await sequelize.transaction(async (t) => {
@@ -57,8 +69,13 @@ const create = asyncHandler(async (req, res) => {
 
 // "Unmark payment (if recorded by mistake)": reverts the invoice back to issued and removes the ledger entry.
 const remove = asyncHandler(async (req, res) => {
-  const payment = await Payment.findByPk(req.params.id, { include: [{ model: Invoice, as: 'invoice' }] });
-  if (!payment) return res.status(404).json({ message: 'Payment not found' });
+  const payment = await Payment.findByPk(req.params.id, {
+    include: [{ model: Invoice, as: 'invoice', include: [{ model: Room, as: 'room' }] }],
+  });
+  const accessibleIds = await getAccessiblePropertyIds(req.user);
+  if (!payment || !accessibleIds.includes(payment.invoice?.room?.propertyId)) {
+    return res.status(404).json({ message: 'Payment not found' });
+  }
 
   await sequelize.transaction(async (t) => {
     await Invoice.update({ status: 'issued' }, { where: { id: payment.invoiceId }, transaction: t });

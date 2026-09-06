@@ -12,7 +12,12 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ message: err.message });
   }
   console.error(err);
-  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+  const status = err.status || 500;
+  // Don't leak internal error details (e.g. raw DB errors) to clients in production.
+  const message = status >= 500 && process.env.NODE_ENV === 'production'
+    ? 'Internal server error'
+    : err.message || 'Internal server error';
+  res.status(status).json({ message });
 };
 
 module.exports = errorHandler;
