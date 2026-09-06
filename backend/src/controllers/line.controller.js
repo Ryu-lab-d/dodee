@@ -8,6 +8,7 @@ const webhook = async (req, res) => {
 
   // Fail closed: without a configured secret we cannot verify the request came from LINE.
   if (!secret || !lineService.verifySignature(req.body, signature, secret)) {
+    console.error('[line.controller] webhook rejected: signature mismatch or no channel secret configured');
     return res.status(401).send('invalid signature');
   }
 

@@ -23,10 +23,19 @@ const notifyOnce = async ({ user, type, message, card, referenceType, referenceI
   const existing = await Notification.findOne({ where: { userId: user.id, referenceType, referenceId } });
   if (existing) return false;
 
-  await Notification.create({ userId: user.id, type, message, referenceType, referenceId, sentVia: 'app' });
+  let sentVia = 'app';
   if (user.lineUserId) {
-    await lineService.pushMessages(user.lineUserId, [card]);
+    const result = await lineService.pushMessages(user.lineUserId, [card]);
+    if (result.ok) {
+      sentVia = 'line';
+    } else {
+      // pushMessages already logs the underlying LINE error - this just ties it to the
+      // specific alert, since this event is deduped and will never be retried via LINE.
+      console.error(`[notification.service] LINE push failed for user ${user.id} (${type}/${referenceId}):`, result.error);
+    }
   }
+
+  await Notification.create({ userId: user.id, type, message, referenceType, referenceId, sentVia });
   return true;
 };
 

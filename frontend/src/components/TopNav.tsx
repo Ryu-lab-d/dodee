@@ -70,10 +70,9 @@ export default function TopNav() {
         </div>
       </div>
 
-      <nav
-        className="mx-auto hidden max-w-6xl gap-x-2 gap-y-5 px-6 pb-6 md:grid"
-        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))' }}
-      >
+      {/* Fixed 6-column grid (not auto-fit) so a trailing item never wraps alone onto its
+          own row - it always lands in the last column of a shared row with its neighbors. */}
+      <nav className="mx-auto hidden max-w-6xl grid-cols-6 gap-x-2 gap-y-5 px-6 pb-6 md:grid">
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;

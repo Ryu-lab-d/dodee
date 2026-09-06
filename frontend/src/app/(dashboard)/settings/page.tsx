@@ -10,6 +10,7 @@ interface LineSettingsResponse {
   accessTokenPreview: string | null;
   channelSecretConfigured: boolean;
   channelSecretPreview: string | null;
+  locked: boolean;
 }
 
 function MyLineConnection() {
@@ -121,12 +122,27 @@ function LineOaSettings() {
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
 
   const load = () => api.get<LineSettingsResponse>('/settings/line').then(setData).catch((err) => setError(err.message));
 
   useEffect(() => {
     load();
   }, []);
+
+  const locked = !!data?.locked && !unlocked;
+
+  const requestUnlock = () => {
+    if (
+      confirm(
+        'การแก้ไขค่านี้อาจทำให้การแจ้งเตือนอัตโนมัติผ่าน LINE หยุดทำงานชั่วคราวจนกว่าจะตั้งค่าใหม่ถูกต้อง ยืนยันว่าต้องการแก้ไข?'
+      )
+    ) {
+      setUnlocked(true);
+      setError(null);
+      setNotice(null);
+    }
+  };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -137,10 +153,12 @@ function LineOaSettings() {
       await api.put('/settings/line', {
         accessToken: accessToken || undefined,
         channelSecret: channelSecret || undefined,
+        confirmChange: unlocked || undefined,
       });
       setAccessToken('');
       setChannelSecret('');
-      setNotice('บันทึกการตั้งค่า LINE OA สำเร็จ');
+      setUnlocked(false);
+      setNotice('บันทึกการตั้งค่า LINE OA สำเร็จ (ตรวจสอบกับ LINE แล้วว่าใช้งานได้จริง)');
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ');
@@ -157,6 +175,17 @@ function LineOaSettings() {
           {showGuide ? 'ซ่อนวิธีตั้งค่า' : 'ยังไม่รู้วิธีตั้งค่า? ดูวิธีที่นี่'}
         </button>
       </div>
+
+      {data?.locked && (
+        <div className="mb-3 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          <span>{unlocked ? 'ปลดล็อกแล้ว - แก้ไขแล้วกดบันทึกเพื่อยืนยัน' : 'ตั้งค่าไว้แล้วและถูกล็อกไว้เพื่อป้องกันการแก้ไขโดยไม่ตั้งใจ'}</span>
+          {!unlocked && (
+            <button type="button" onClick={requestUnlock} className="font-medium text-blue-600 hover:text-blue-700">
+              แก้ไข
+            </button>
+          )}
+        </div>
+      )}
 
       {showGuide && (
         <div className="mb-4 rounded-xl border border-blue-100 bg-sky-50 p-4 text-sm text-slate-700">
@@ -196,8 +225,9 @@ function LineOaSettings() {
           <label className="mb-1 block text-sm font-medium text-slate-700">Channel Access Token</label>
           <input
             type="password"
+            disabled={locked}
             placeholder={data?.accessTokenConfigured ? data.accessTokenPreview || 'ตั้งค่าแล้ว' : 'ยังไม่ได้ตั้งค่า'}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
             value={accessToken}
             onChange={(e) => setAccessToken(e.target.value)}
           />
@@ -206,19 +236,22 @@ function LineOaSettings() {
           <label className="mb-1 block text-sm font-medium text-slate-700">Channel Secret</label>
           <input
             type="password"
+            disabled={locked}
             placeholder={data?.channelSecretConfigured ? data.channelSecretPreview || 'ตั้งค่าแล้ว' : 'ยังไม่ได้ตั้งค่า'}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
             value={channelSecret}
             onChange={(e) => setChannelSecret(e.target.value)}
           />
         </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? 'กำลังบันทึก...' : 'บันทึก'}
-        </button>
+        {!locked && (
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? 'กำลังตรวจสอบและบันทึก...' : 'บันทึก'}
+          </button>
+        )}
       </form>
     </div>
   );
