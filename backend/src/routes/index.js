@@ -15,6 +15,7 @@ router.use('/meeting-minutes', require('./meetingMinute.routes'));
 router.use('/notifications', require('./notification.routes'));
 router.use('/transactions', require('./transaction.routes'));
 router.use('/activity-log', require('./activityLog.routes'));
+router.use('/role-permissions', require('./rolePermission.routes'));
 router.use('/calendar', require('./calendar.routes'));
 
 module.exports = router;

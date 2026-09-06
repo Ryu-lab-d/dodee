@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
@@ -9,13 +10,14 @@ import { SkeletonRows } from '@/components/Skeleton';
 
 const ROLE_LABEL: Record<Role, string> = {
   owner: 'เจ้าของ',
-  staff: 'พนักงาน',
-  accountant: 'ฝ่ายบัญชี',
+  admin: 'แอดมิน',
+  manager: 'ผู้จัดการ',
 };
 
 interface ActivityLogEntry {
   id: string;
   userName: string;
+  role?: string;
   action: string;
   description: string;
   createdAt: string;
@@ -37,7 +39,7 @@ function ActivityLogSection() {
         onClick={() => setShow((v) => !v)}
         className="flex w-full items-center justify-between px-5 py-3 text-left text-sm font-semibold text-slate-900"
       >
-        ประวัติการทำงาน (Activity Log)
+        ประวัติการทำงานทั้งหมด (Activity Log)
         <span className="text-xs font-normal text-blue-600">{show ? 'ซ่อน' : 'แสดง'}</span>
       </button>
       {show && (
@@ -57,6 +59,126 @@ function ActivityLogSection() {
           {logs.length === 0 && <p className="px-5 py-6 text-center text-sm text-slate-400">ยังไม่มีประวัติ</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+function StaffLogModal({ staffUser, onClose }: { staffUser: User; onClose: () => void }) {
+  const [logs, setLogs] = useState<ActivityLogEntry[] | null>(null);
+
+  useEffect(() => {
+    api
+      .get<ActivityLogEntry[]>(`/activity-log?userId=${staffUser.id}`)
+      .then(setLogs)
+      .catch(() => setLogs([]));
+  }, [staffUser.id]);
+
+  return (
+    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/30 p-4">
+      <div className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-lg">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">ประวัติการทำงานของ {staffUser.name}</h3>
+            <p className="text-xs text-slate-400">แสดงเฉพาะการกระทำของบัญชีนี้ล่าสุด 100 รายการ</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-xs font-medium text-slate-500 hover:text-slate-700">
+            ปิด
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {logs === null && <p className="px-5 py-6 text-center text-sm text-slate-400">กำลังโหลด...</p>}
+          {logs?.map((log, i) => (
+            <div
+              key={log.id}
+              className="fade-up border-b border-slate-50 px-5 py-2.5 text-sm last:border-0"
+              style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
+            >
+              <p className="text-slate-700">{log.description}</p>
+              <p className="text-xs text-slate-400">{new Date(log.createdAt).toLocaleString('th-TH')}</p>
+            </div>
+          ))}
+          {logs?.length === 0 && <p className="px-5 py-6 text-center text-sm text-slate-400">ยังไม่มีประวัติของพนักงานคนนี้</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditStaffModal({
+  staffUser,
+  onClose,
+  onSaved,
+}: {
+  staffUser: User;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(staffUser.name);
+  const [phone, setPhone] = useState(staffUser.phone || '');
+  const [email, setEmail] = useState(staffUser.email || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    try {
+      await api.put(`/users/${staffUser.id}`, { name, phone: phone || null, email: email || null });
+      onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/30 p-4">
+      <form onSubmit={handleSave} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-lg">
+        <h3 className="mb-4 text-sm font-semibold text-slate-900">แก้ไขข้อมูล {staffUser.name}</h3>
+        {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">ชื่อ-นามสกุล</label>
+            <input
+              required
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">เบอร์โทร</label>
+            <input
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">อีเมล</label>
+            <input
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+          </button>
+          <button type="button" onClick={onClose} className="rounded-lg px-4 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100">
+            ยกเลิก
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -128,12 +250,14 @@ export default function StaffPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [assigningUser, setAssigningUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [viewingLogUser, setViewingLogUser] = useState<User | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<Role>('staff');
+  const [role, setRole] = useState<Role>('manager');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -167,7 +291,7 @@ export default function StaffPage() {
       setName('');
       setPhone('');
       setEmail('');
-      setRole('staff');
+      setRole('manager');
       setShowForm(false);
       load();
     } catch (err) {
@@ -197,12 +321,20 @@ export default function StaffPage() {
           <h1 className="text-xl font-semibold text-slate-900">พนักงาน & สิทธิ์การใช้งาน</h1>
           <p className="text-sm text-slate-500">สร้างบัญชีพนักงาน กำหนดบทบาท และมอบหมายทรัพย์สินที่รับผิดชอบ</p>
         </div>
-        <button type="button"
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          {showForm ? 'ยกเลิก' : '+ เพิ่มพนักงาน'}
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <Link
+            href="/permissions"
+            className="rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          >
+            จัดการสิทธิ์
+          </Link>
+          <button type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            {showForm ? 'ยกเลิก' : '+ เพิ่มพนักงาน'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -248,8 +380,8 @@ export default function StaffPage() {
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
             >
-              <option value="staff">พนักงาน</option>
-              <option value="accountant">ฝ่ายบัญชี</option>
+              <option value="manager">ผู้จัดการ</option>
+              <option value="admin">แอดมิน</option>
               <option value="owner">เจ้าของ</option>
             </select>
           </div>
@@ -295,8 +427,8 @@ export default function StaffPage() {
                       onChange={(e) => changeRole(u, e.target.value as Role)}
                       className="rounded-lg border border-slate-300 px-2 py-1 text-xs outline-none focus:border-blue-500"
                     >
-                      <option value="staff">พนักงาน</option>
-                      <option value="accountant">ฝ่ายบัญชี</option>
+                      <option value="manager">ผู้จัดการ</option>
+                      <option value="admin">แอดมิน</option>
                       <option value="owner">เจ้าของ</option>
                     </select>
                   )}
@@ -321,11 +453,21 @@ export default function StaffPage() {
                   </span>
                 </td>
                 <td className="px-4 py-2 text-right">
-                  {u.id !== user?.id && (
-                    <button type="button" onClick={() => toggleStatus(u)} className="text-xs font-medium text-slate-500 hover:text-slate-700">
-                      {u.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+                  <div className="flex justify-end gap-3">
+                    <button type="button" onClick={() => setViewingLogUser(u)} className="text-xs font-medium text-slate-500 hover:text-slate-700">
+                      ดู Log
                     </button>
-                  )}
+                    {u.id !== user?.id && (
+                      <>
+                        <button type="button" onClick={() => setEditingUser(u)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                          แก้ไข
+                        </button>
+                        <button type="button" onClick={() => toggleStatus(u)} className="text-xs font-medium text-slate-500 hover:text-red-600">
+                          {u.status === 'active' ? 'ระงับการใช้งาน' : 'เปิดใช้งาน'}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -346,6 +488,14 @@ export default function StaffPage() {
           onClose={() => setAssigningUser(null)}
           onSaved={load}
         />
+      )}
+
+      {editingUser && (
+        <EditStaffModal staffUser={editingUser} onClose={() => setEditingUser(null)} onSaved={load} />
+      )}
+
+      {viewingLogUser && (
+        <StaffLogModal staffUser={viewingLogUser} onClose={() => setViewingLogUser(null)} />
       )}
 
       <ActivityLogSection />

@@ -1,6 +1,7 @@
 const { MeterReading, Room, Property } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
+const { logActivity } = require('../utils/activityLog');
 
 const list = asyncHandler(async (req, res) => {
   const accessibleIds = await getAccessiblePropertyIds(req.user);
@@ -100,6 +101,11 @@ const create = asyncHandler(async (req, res) => {
     recordedBy: req.user.id,
   });
 
+  logActivity(
+    req.user,
+    'record_meter_reading',
+    `จดมิเตอร์ห้อง ${room.roomNumber}: น้ำ ${waterPrevious}→${waterCurrent}, ไฟ ${electricityPrevious}→${electricityCurrent}`
+  );
   res.status(201).json({ reading, warning });
 });
 

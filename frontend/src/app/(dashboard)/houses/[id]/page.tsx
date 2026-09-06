@@ -108,7 +108,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
   if (!house) return <p className="text-sm text-slate-400">กำลังโหลด...</p>;
 
   const unit = house.rooms?.[0];
-  const canEdit = user?.role === 'owner' || user?.role === 'staff';
+  const canEdit = user?.role === 'owner' || !!user?.permissions?.propertyManage;
   const fullAddress = [house.address, house.subdistrict, house.district, house.province, house.postalCode]
     .filter(Boolean)
     .join(' · ');

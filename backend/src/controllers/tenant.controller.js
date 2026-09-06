@@ -2,6 +2,18 @@ const { Tenant, Room } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
 const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
+const { describeChanges } = require('../utils/diff');
+
+const TENANT_FIELD_LABELS = {
+  name: 'ชื่อ',
+  phone: 'เบอร์โทร',
+  email: 'อีเมล',
+  idCard: 'เลขบัตรประชาชน',
+  moveInDate: 'วันเข้าอยู่',
+  contractEndDate: 'วันหมดสัญญา',
+  depositAmount: 'เงินมัดจำ',
+  status: 'สถานะ',
+};
 
 const list = asyncHandler(async (req, res) => {
   const accessibleIds = await getAccessiblePropertyIds(req.user);
@@ -20,6 +32,9 @@ const getOne = asyncHandler(async (req, res) => {
   const tenant = await Tenant.findByPk(req.params.id, { include: [{ model: Room, as: 'room' }] });
   if (!tenant || !(await canAccessProperty(req.user, tenant.room?.propertyId))) {
     return res.status(404).json({ message: 'Tenant not found' });
+  }
+  if (req.user.role !== 'owner') {
+    logActivity(req.user, 'view_tenant', `ดูรายละเอียดผู้เช่า "${tenant.name}"`);
   }
   res.json(tenant);
 });
@@ -47,8 +62,14 @@ const update = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Tenant not found' });
   }
 
+  const before = tenant.toJSON();
   const { name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status } = req.body;
   await tenant.update({ name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status });
+
+  const changes = describeChanges(before, tenant.toJSON(), TENANT_FIELD_LABELS);
+  if (changes.length) {
+    logActivity(req.user, 'update_tenant', `แก้ไขผู้เช่า "${tenant.name}": ${changes.join(', ')}`);
+  }
 
   if (status === 'หมดสัญญา' || status === 'ยกเลิก') {
     await Room.update({ status: 'ว่าง' }, { where: { id: tenant.roomId } });

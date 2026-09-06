@@ -345,7 +345,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   if (!property) return <p className="text-sm text-slate-400">กำลังโหลด...</p>;
 
   const rooms: Room[] = property.rooms || [];
-  const canEdit = user?.role === 'owner' || user?.role === 'staff';
+  const canEdit = user?.role === 'owner' || !!user?.permissions?.propertyManage || !!user?.permissions?.roomManage;
   const expandedRoom = rooms.find((r) => r.id === expandedRoomId);
 
   return (

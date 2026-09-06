@@ -6,6 +6,7 @@ const ActivityLog = sequelize.define('ActivityLog', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   userId: { type: DataTypes.UUID, allowNull: false },
   userName: { type: DataTypes.STRING, allowNull: false },
+  role: { type: DataTypes.STRING }, // snapshot of the actor's role at the time (role can change later)
   action: { type: DataTypes.STRING, allowNull: false }, // e.g. "create_property", "record_payment"
   description: { type: DataTypes.STRING, allowNull: false },
 }, {

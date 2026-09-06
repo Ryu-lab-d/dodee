@@ -38,7 +38,11 @@ html {
 }
 
 .success-circle {
-  animation: success-circle-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+  /* backwards, not both/forwards: holding the animated end value keeps `transform` at a
+     non-"none" resolved matrix forever, which makes this element a containing block for
+     any position:fixed descendant. backwards still hides it correctly during the 0.1s
+     delay, and the natural resting style already matches the animation's end state. */
+  animation: success-circle-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s backwards;
 }
 
 .success-check {
@@ -69,11 +73,11 @@ html {
 }
 
 .splash-icon-reveal {
-  animation: splash-icon-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: splash-icon-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
 .splash-icon-reveal img {
-  animation: splash-icon-reveal-mask 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+  animation: splash-icon-reveal-mask 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s backwards;
 }
 
 .splash-text-sweep {
@@ -91,19 +95,27 @@ html {
    inline `animationDelay` (e.g. style={{ animationDelay: `${i * 60}ms` }}). */
 @keyframes fade-up-in {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 .fade-up {
-  animation: fade-up-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* Page-level entrance, used once per route change in the dashboard layout. */
 @keyframes page-fade-in {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; transform: none; }
 }
 .page-fade-in {
-  animation: page-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* backwards, not both/forwards: `forwards` holds the animation's resolved end value
+     forever - even though it's authored as `transform: none`, a *held* CSS-animation
+     value never reports back as the literal "none" keyword, so this element would stay
+     a containing block for any position:fixed descendant (e.g. a modal), pinning it to
+     main's box instead of the viewport and breaking clicks anywhere near the header.
+     `backwards` still applies the "from" state before the animation starts (no FOUC)
+     but lets the element return to its normal (non-animated) resting style afterward,
+     which looks identical here since nothing else sets opacity/transform on it. */
+  animation: page-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* Subtle lift for clickable cards/rows. */
@@ -126,11 +138,11 @@ button:not(:disabled):active {
 /* Small popovers/dropdowns (notification bell, menus). */
 @keyframes dropdown-in {
   from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 1; transform: none; }
 }
 .dropdown-in {
   transform-origin: top right;
-  animation: dropdown-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: dropdown-in 0.18s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* Bell wiggle to draw attention when there are unread notifications. */
@@ -151,10 +163,10 @@ button:not(:disabled):active {
 /* Card entrance (login, etc.) and an error shake for failed form submits. */
 @keyframes card-in {
   from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 1; transform: none; }
 }
 .card-in {
-  animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 @keyframes shake-x {
@@ -226,7 +238,7 @@ button:not(:disabled):active {
 
 @keyframes ios-sheet-up-in {
   from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  to { transform: none; }
 }
 
 .ios-sheet-backdrop {
@@ -234,5 +246,5 @@ button:not(:disabled):active {
 }
 
 .ios-sheet-up {
-  animation: ios-sheet-up-in 0.38s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: ios-sheet-up-in 0.38s cubic-bezier(0.32, 0.72, 0, 1) backwards;
 }

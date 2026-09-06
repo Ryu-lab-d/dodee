@@ -1,5 +1,14 @@
-export type Role = 'owner' | 'staff' | 'accountant';
+export type Role = 'owner' | 'admin' | 'manager';
 export type UserStatus = 'active' | 'inactive';
+
+export type PermissionKey =
+  | 'propertyManage'
+  | 'roomManage'
+  | 'tenantManage'
+  | 'meterReadingManage'
+  | 'invoiceManage'
+  | 'paymentManage'
+  | 'transactionManage';
 
 export interface User {
   id: string;
@@ -14,6 +23,7 @@ export interface User {
   termsAcceptedAt?: string | null;
   termsVersion?: string | null;
   assignedProperties?: Array<{ id: string; name: string }>;
+  permissions?: Partial<Record<PermissionKey, boolean>>;
   createdAt?: string;
 }
 

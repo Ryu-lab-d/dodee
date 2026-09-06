@@ -2,6 +2,20 @@ const { sequelize, Property, Room, Tenant, User, UserProperty } = require('../mo
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
 const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
+const { describeChanges } = require('../utils/diff');
+
+const PROPERTY_FIELD_LABELS = {
+  name: 'ชื่อ',
+  type: 'ประเภท',
+  address: 'ที่อยู่',
+  subdistrict: 'ตำบล/แขวง',
+  district: 'อำเภอ/เขต',
+  province: 'จังหวัด',
+  postalCode: 'รหัสไปรษณีย์',
+  waterRate: 'ค่าน้ำ/หน่วย',
+  electricityRate: 'ค่าไฟ/หน่วย',
+  description: 'รายละเอียด',
+};
 
 const roomsWithTenants = { model: Room, as: 'rooms', include: [{ model: Tenant, as: 'tenants' }] };
 
@@ -26,6 +40,9 @@ const getOne = asyncHandler(async (req, res) => {
     include: [roomsWithTenants],
   });
   if (!property) return res.status(404).json({ message: 'Property not found' });
+  if (req.user.role !== 'owner') {
+    logActivity(req.user, 'view_property', `ดูรายละเอียดทรัพย์สิน "${property.name}"`);
+  }
   res.json(property);
 });
 
@@ -87,14 +104,17 @@ const create = asyncHandler(async (req, res) => {
 
 const update = asyncHandler(async (req, res) => {
   const property = await Property.findByPk(req.params.id, { include: [roomsWithTenants] });
-  if (!property) return res.status(404).json({ message: 'Property not found' });
-  if (property.ownerId !== req.user.id) return res.status(404).json({ message: 'Property not found' });
+  if (!property || !(await canAccessProperty(req.user, property.id))) {
+    return res.status(404).json({ message: 'Property not found' });
+  }
 
   const {
     name, type, address, subdistrict, district, province, postalCode, latitude, longitude,
     waterRate, electricityRate, description, details, images,
     baseRentPrice, meterWaterInitial, meterElectricityInitial,
   } = req.body;
+
+  const before = property.toJSON();
 
   await property.update({
     name, type, address, subdistrict, district, province, postalCode, latitude, longitude,
@@ -111,7 +131,11 @@ const update = asyncHandler(async (req, res) => {
   }
 
   const refreshed = await Property.findByPk(property.id, { include: [roomsWithTenants] });
-  logActivity(req.user, 'update_property', `แก้ไขทรัพย์สิน "${property.name}"`);
+  const changes = describeChanges(before, property.toJSON(), PROPERTY_FIELD_LABELS);
+  const desc = changes.length
+    ? `แก้ไขทรัพย์สิน "${property.name}": ${changes.join(', ')}`
+    : `แก้ไขทรัพย์สิน "${property.name}"`;
+  logActivity(req.user, 'update_property', desc);
   res.json(refreshed);
 });
 

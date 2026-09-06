@@ -1,6 +1,16 @@
 const { Room, Tenant, Property } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
+const { logActivity } = require('../utils/activityLog');
+const { describeChanges } = require('../utils/diff');
+
+const ROOM_FIELD_LABELS = {
+  roomNumber: 'เลขห้อง',
+  roomType: 'ประเภทห้อง',
+  baseRentPrice: 'ค่าเช่า',
+  status: 'สถานะ',
+  description: 'รายละเอียด',
+};
 
 const list = asyncHandler(async (req, res) => {
   const accessibleIds = await getAccessiblePropertyIds(req.user);
@@ -28,6 +38,9 @@ const getOne = asyncHandler(async (req, res) => {
   });
   if (!room || !(await canAccessProperty(req.user, room.propertyId))) {
     return res.status(404).json({ message: 'Room not found' });
+  }
+  if (req.user.role !== 'owner') {
+    logActivity(req.user, 'view_room', `ดูรายละเอียดห้อง ${room.roomNumber} (${room.property?.name || ''})`);
   }
   res.json(room);
 });
@@ -57,6 +70,7 @@ const create = asyncHandler(async (req, res) => {
   });
 
   await Property.increment('totalRooms', { by: 1, where: { id: propertyId } });
+  logActivity(req.user, 'create_room', `เพิ่มห้อง ${roomNumber}`);
   res.status(201).json(room);
 });
 
@@ -66,8 +80,13 @@ const update = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Room not found' });
   }
 
+  const before = room.toJSON();
   const { roomNumber, roomType, baseRentPrice, status, description, details, images } = req.body;
   await room.update({ roomNumber, roomType, baseRentPrice, status, description, details, images });
+
+  const changes = describeChanges(before, room.toJSON(), ROOM_FIELD_LABELS);
+  const desc = changes.length ? `แก้ไขห้อง ${room.roomNumber}: ${changes.join(', ')}` : `แก้ไขห้อง ${room.roomNumber}`;
+  logActivity(req.user, 'update_room', desc);
   res.json(room);
 });
 

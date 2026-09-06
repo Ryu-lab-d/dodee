@@ -9,9 +9,9 @@ const User = sequelize.define('User', {
   email: { type: DataTypes.STRING, validate: { isEmail: true } },
   phone: { type: DataTypes.STRING },
   role: {
-    type: DataTypes.ENUM('owner', 'staff', 'accountant'),
+    type: DataTypes.ENUM('owner', 'admin', 'manager'),
     allowNull: false,
-    defaultValue: 'staff',
+    defaultValue: 'manager',
   },
   status: {
     type: DataTypes.ENUM('active', 'inactive'),

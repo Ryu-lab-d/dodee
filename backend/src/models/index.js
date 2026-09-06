@@ -12,6 +12,7 @@ const UserProperty = require('./userProperty.model');
 const Setting = require('./setting.model');
 const MeetingMinute = require('./meetingMinute.model');
 const ActivityLog = require('./activityLog.model');
+const RolePermission = require('./rolePermission.model');
 
 // Property <-> Room
 Property.hasMany(Room, { foreignKey: 'propertyId', as: 'rooms', onDelete: 'CASCADE' });
@@ -68,4 +69,5 @@ module.exports = {
   Setting,
   MeetingMinute,
   ActivityLog,
+  RolePermission,
 };

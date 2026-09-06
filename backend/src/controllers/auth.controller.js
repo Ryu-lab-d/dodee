@@ -4,6 +4,7 @@ const { User } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
 const { TERMS_VERSION, TERMS_TEXT } = require('../constants/terms');
+const { VALID_PERMISSION_KEYS, loadMatrix } = require('../utils/permissions');
 
 const signToken = (user) =>
   jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
@@ -27,19 +28,20 @@ const login = asyncHandler(async (req, res) => {
   }
 
   const token = signToken(user);
+  logActivity(user, 'login', 'เข้าสู่ระบบ');
   res.json({
     token,
     user: { id: user.id, username: user.username, name: user.name, role: user.role },
   });
 });
 
-// Owner-only: create staff/accountant accounts.
+// Owner-only: create admin/manager accounts.
 const register = asyncHandler(async (req, res) => {
   const { username, password, name, email, phone, role } = req.body;
   if (!username || !password || !name || !role) {
     return res.status(400).json({ message: 'username, password, name and role are required' });
   }
-  if (!['staff', 'accountant', 'owner'].includes(role)) {
+  if (!['manager', 'admin', 'owner'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role' });
   }
   if (password.length < 6) {
@@ -54,7 +56,11 @@ const register = asyncHandler(async (req, res) => {
 
 const me = asyncHandler(async (req, res) => {
   const { id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion } = req.user;
-  res.json({ id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion });
+  const permissions =
+    role === 'owner'
+      ? Object.fromEntries([...VALID_PERMISSION_KEYS].map((k) => [k, true]))
+      : (await loadMatrix())[role] || {};
+  res.json({ id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion, permissions });
 });
 
 const getTerms = asyncHandler(async (req, res) => {
@@ -88,6 +94,7 @@ const changePassword = asyncHandler(async (req, res) => {
 
   const hashed = await bcrypt.hash(newPassword, 10);
   await req.user.update({ password: hashed });
+  logActivity(req.user, 'change_password', 'เปลี่ยนรหัสผ่านของตัวเอง');
   res.status(200).json({ ok: true });
 });
 
