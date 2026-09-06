@@ -41,25 +41,25 @@ export default function TopNav() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-blue-100 bg-white/90 backdrop-blur print:hidden">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-16 w-auto" priority />
-        <div className="flex items-center gap-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4">
+        <Image src="/logo.png" alt="DoDee" width={172} height={152} className="h-10 w-auto md:h-16" priority />
+        <div className="flex items-center gap-2 md:gap-4">
           <NotificationBell />
-          <div className="text-right">
+          <div className="hidden text-right md:block">
             <p className="text-sm font-medium text-slate-900">{user?.name}</p>
             <p className="text-xs text-slate-400">{user?.role}</p>
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 md:px-3"
           >
             <LogOut className="h-3.5 w-3.5" />
-            ออกจากระบบ
+            <span className="hidden md:inline">ออกจากระบบ</span>
           </button>
         </div>
       </div>
 
-      <nav className="mx-auto flex max-w-6xl flex-wrap gap-3 px-6 pb-4">
+      <nav className="mx-auto hidden max-w-6xl flex-wrap gap-3 px-6 pb-4 md:flex">
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;

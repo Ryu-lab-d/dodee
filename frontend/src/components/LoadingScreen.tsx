@@ -3,7 +3,7 @@ import Image from 'next/image';
 export default function LoadingScreen() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 bg-sky-50">
-      <div className="splash-icon">
+      <div className="splash-icon-reveal">
         <Image src="/icon.png" alt="" width={256} height={256} className="h-16 w-16" priority />
       </div>
 
