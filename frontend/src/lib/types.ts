@@ -11,6 +11,8 @@ export interface User {
   phone?: string;
   lineUserId?: string | null;
   lineLinkCode?: string | null;
+  termsAcceptedAt?: string | null;
+  termsVersion?: string | null;
   assignedProperties?: Array<{ id: string; name: string }>;
   createdAt?: string;
 }

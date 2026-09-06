@@ -49,8 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('dodee_token', res.token);
     localStorage.setItem('dodee_user', JSON.stringify(res.user));
     setUser(res.user);
-    router.push(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard');
-    refreshUser();
+    // Login only returns a minimal user shape - fetch the full profile (role/terms/etc)
+    // before deciding where to send them, so first-time employees land on /terms directly.
+    await refreshUser();
+    const fresh = JSON.parse(localStorage.getItem('dodee_user') || 'null') as User | null;
+    if (fresh && fresh.role !== 'owner' && !fresh.termsAcceptedAt) {
+      router.push('/terms');
+    } else {
+      router.push(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard');
+    }
   };
 
   const logout = () => {

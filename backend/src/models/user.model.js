@@ -20,6 +20,9 @@ const User = sequelize.define('User', {
   },
   lineUserId: { type: DataTypes.STRING, unique: true },
   lineLinkCode: { type: DataTypes.STRING, unique: true },
+  termsAcceptedAt: { type: DataTypes.DATE },
+  termsVersion: { type: DataTypes.STRING },
+  termsSignatureUrl: { type: DataTypes.STRING },
 }, {
   tableName: 'users',
   timestamps: true,

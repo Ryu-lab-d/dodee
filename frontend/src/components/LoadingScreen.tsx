@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-export default function LoadingScreen() {
+export default function LoadingScreen({ message }: { message?: string }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 bg-sky-50">
       <div className="splash-icon-reveal">
@@ -13,6 +13,8 @@ export default function LoadingScreen() {
           <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">Do Dee</span>
         </span>
       </div>
+
+      {message && <p className="animate-pulse px-6 text-center text-sm text-slate-500">{message}</p>}
 
       <div className="flex gap-1.5">
         <span className="splash-dot h-2 w-2 rounded-full bg-blue-500" style={{ animationDelay: '0s' }} />

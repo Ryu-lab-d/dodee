@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
+const { TERMS_VERSION, TERMS_TEXT } = require('../constants/terms');
 
 const signToken = (user) =>
   jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
@@ -49,8 +50,25 @@ const register = asyncHandler(async (req, res) => {
 });
 
 const me = asyncHandler(async (req, res) => {
-  const { id, username, name, email, phone, role, status, lineUserId, lineLinkCode } = req.user;
-  res.json({ id, username, name, email, phone, role, status, lineUserId, lineLinkCode });
+  const { id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion } = req.user;
+  res.json({ id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion });
+});
+
+const getTerms = asyncHandler(async (req, res) => {
+  res.json({ version: TERMS_VERSION, text: TERMS_TEXT });
+});
+
+const acceptTerms = asyncHandler(async (req, res) => {
+  const { signatureUrl } = req.body;
+  if (!signatureUrl) return res.status(400).json({ message: 'signatureUrl is required' });
+
+  await req.user.update({
+    termsAcceptedAt: new Date(),
+    termsVersion: TERMS_VERSION,
+    termsSignatureUrl: signatureUrl,
+  });
+  logActivity(req.user, 'accept_terms', `ยอมรับเงื่อนไขการใช้งาน (v${TERMS_VERSION})`);
+  res.status(200).json({ ok: true, termsAcceptedAt: req.user.termsAcceptedAt, termsVersion: TERMS_VERSION });
 });
 
 const changePassword = asyncHandler(async (req, res) => {
@@ -70,4 +88,4 @@ const changePassword = asyncHandler(async (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-module.exports = { login, register, me, changePassword };
+module.exports = { login, register, me, changePassword, getTerms, acceptTerms };

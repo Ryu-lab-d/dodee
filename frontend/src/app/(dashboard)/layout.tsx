@@ -8,6 +8,10 @@ import TopNav from '@/components/TopNav';
 import MobileTabBar from '@/components/MobileTabBar';
 import LoadingScreen from '@/components/LoadingScreen';
 
+// Owner accounts don't need the employee onboarding/terms flow.
+const needsTerms = (user: { role: string; termsAcceptedAt?: string | null } | null) =>
+  !!user && user.role !== 'owner' && !user.termsAcceptedAt;
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -15,10 +19,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const showSplash = useSplashGate(loading);
 
   useEffect(() => {
-    if (!showSplash && !user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (showSplash) return;
+    if (!user) {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    } else if (needsTerms(user)) {
+      router.replace('/terms');
+    }
   }, [showSplash, user, router, pathname]);
 
-  if (showSplash || !user) {
+  if (showSplash || !user || needsTerms(user)) {
     return <LoadingScreen />;
   }
 
