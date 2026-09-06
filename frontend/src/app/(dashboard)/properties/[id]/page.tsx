@@ -32,6 +32,7 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
   const [details, setDetails] = useState<PropertyDetail[]>(room.details || []);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,10 +64,18 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
     }
   };
 
+  const activeTenant = room.tenants?.find((t) => t.status === 'เช่าอยู่');
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
   return (
-    <div className="rounded-2xl border border-blue-100 bg-sky-50 p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-900">ห้อง {room.roomNumber}</h3>
+    <div className="fade-up overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-sky-50 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-bold text-slate-900">ห้อง {room.roomNumber}</h3>
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[room.status]}`}>
+            {room.status}
+          </span>
+        </div>
         <div className="flex gap-2">
           {canEdit && !editing && (
             <button type="button"
@@ -74,7 +83,7 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
                 setError(null);
                 setEditing(true);
               }}
-              className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
             >
               แก้ไขรายละเอียดห้อง
             </button>
@@ -82,20 +91,40 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
           {user?.role === 'owner' && !editing && (
             <button type="button"
               onClick={handleDelete}
-              className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
             >
               ลบห้อง
             </button>
           )}
         </div>
       </div>
-      {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
-      {canEdit && (
-        <div className="mb-4">
-          <TenantAssignPanel room={room} onSaved={onSaved} />
-        </div>
-      )}
+      <div className="p-5">
+        {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+
+        {!editing && (
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">ค่าเช่า/เดือน</p>
+              <p className="mt-0.5 text-base font-bold text-blue-700">฿{Number(room.baseRentPrice).toLocaleString()}</p>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">ผู้เช่าปัจจุบัน</p>
+              <p className="mt-0.5 truncate text-base font-bold text-slate-900">{activeTenant ? activeTenant.name : '-'}</p>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">หมดสัญญา</p>
+              <p className="mt-0.5 text-base font-bold text-slate-900">{activeTenant?.contractEndDate || '-'}</p>
+            </div>
+          </div>
+        )}
+
+        {canEdit && (
+          <div className="mb-5">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">ผู้เช่า</p>
+            <TenantAssignPanel room={room} onSaved={onSaved} />
+          </div>
+        )}
 
       {editing ? (
         <form onSubmit={handleSave} className="space-y-3">
@@ -119,7 +148,7 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700">รูปภาพ</label>
-            <ImageUploader images={images} onChange={setImages} />
+            <ImageUploader images={images} onChange={setImages} onUploadingChange={setPhotoUploading} />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700">รายละเอียดเพิ่มเติม</label>
@@ -128,10 +157,10 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || photoUploading}
               className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+              {saving ? 'กำลังบันทึก...' : photoUploading ? 'รอรูปภาพ...' : 'บันทึก'}
             </button>
             <button
               type="button"
@@ -143,31 +172,63 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
           </div>
         </form>
       ) : (
-        <div>
+        <div className="space-y-5">
           {room.images.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {room.images.map((img) => (
-                <div key={img} className="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200">
-                  <Image src={fileUrl(img)} alt={room.roomNumber} fill className="object-cover" unoptimized />
-                </div>
-              ))}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">รูปภาพ</p>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {room.images.map((img) => (
+                  <button
+                    type="button"
+                    key={img}
+                    onClick={() => setLightbox(fileUrl(img))}
+                    className="hover-card relative h-24 overflow-hidden rounded-xl border border-slate-200 sm:h-28"
+                  >
+                    <Image src={fileUrl(img)} alt={room.roomNumber} fill className="object-cover" unoptimized />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
-          {room.description && <p className="mb-2 whitespace-pre-line text-sm text-slate-600">{room.description}</p>}
-          {room.details.length > 0 && (
-            <dl className="max-w-md divide-y divide-slate-200 text-sm">
-              {room.details.map((d, idx) => (
-                <div key={idx} className="flex justify-between py-1">
-                  <dt className="text-slate-500">{d.label}</dt>
-                  <dd className="text-slate-900">{d.value}</dd>
-                </div>
-              ))}
-            </dl>
+
+          {room.description && (
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">คำอธิบาย</p>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">{room.description}</p>
+            </div>
           )}
+
+          {room.details.length > 0 && (
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">รายละเอียดเพิ่มเติม</p>
+              <dl className="divide-y divide-slate-100 rounded-xl border border-slate-100 text-sm">
+                {room.details.map((d, idx) => (
+                  <div key={idx} className="flex justify-between px-3 py-2">
+                    <dt className="text-slate-500">{d.label}</dt>
+                    <dd className="font-medium text-slate-900">{d.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
           {!room.images.length && !room.description && !room.details.length && (
-            <p className="text-sm text-slate-400">ยังไม่มีรายละเอียดเพิ่มเติมสำหรับห้องนี้</p>
+            <p className="text-sm text-slate-400">ยังไม่มีรายละเอียดเพิ่มเติมสำหรับห้องนี้ (รูปภาพ/คำอธิบาย)</p>
           )}
         </div>
+      )}
+      </div>
+
+      {lightbox && (
+        <button
+          type="button"
+          onClick={() => setLightbox(null)}
+          className="success-backdrop fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-6"
+        >
+          <div className="relative h-full max-h-[85vh] w-full max-w-2xl">
+            <Image src={lightbox} alt="" fill className="object-contain" unoptimized />
+          </div>
+        </button>
       )}
     </div>
   );
@@ -185,6 +246,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [roomPhotoUploading, setRoomPhotoUploading] = useState(false);
 
   const [editingProperty, setEditingProperty] = useState(false);
   const [propName, setPropName] = useState('');
@@ -193,6 +255,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [propImages, setPropImages] = useState<string[]>([]);
   const [propDetails, setPropDetails] = useState<PropertyDetail[]>([]);
   const [savingProperty, setSavingProperty] = useState(false);
+  const [propPhotoUploading, setPropPhotoUploading] = useState(false);
   const [propertyError, setPropertyError] = useState<string | null>(null);
 
   const load = () =>
@@ -342,7 +405,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-slate-700">รูปภาพ</label>
-            <ImageUploader images={propImages} onChange={setPropImages} />
+            <ImageUploader images={propImages} onChange={setPropImages} onUploadingChange={setPropPhotoUploading} />
           </div>
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-slate-700">รายละเอียดเพิ่มเติม</label>
@@ -350,10 +413,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <button
             type="submit"
-            disabled={savingProperty}
+            disabled={savingProperty || propPhotoUploading}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {savingProperty ? 'กำลังบันทึก...' : 'บันทึก'}
+            {savingProperty ? 'กำลังบันทึก...' : propPhotoUploading ? 'รอรูปภาพอัปโหลดเสร็จ...' : 'บันทึก'}
           </button>
         </form>
       ) : (
@@ -424,14 +487,14 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-slate-700">รูปภาพ</label>
-            <ImageUploader images={roomImages} onChange={setRoomImages} />
+            <ImageUploader images={roomImages} onChange={setRoomImages} onUploadingChange={setRoomPhotoUploading} />
           </div>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || roomPhotoUploading}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+            {saving ? 'กำลังบันทึก...' : roomPhotoUploading ? 'รอรูปภาพอัปโหลดเสร็จ...' : 'บันทึก'}
           </button>
         </form>
       )}

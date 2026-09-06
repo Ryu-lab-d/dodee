@@ -239,6 +239,7 @@ function CompanyProfileSettings() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   useEffect(() => {
     api.get<CompanyProfile>('/settings/company').then((c) => {
@@ -273,7 +274,11 @@ function CompanyProfileSettings() {
       <form onSubmit={handleSave} className="space-y-3">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">โลโก้บริษัท</label>
-          <ImageUploader images={logoUrl ? [logoUrl] : []} onChange={(imgs) => setLogoUrl(imgs[imgs.length - 1] || '')} />
+          <ImageUploader
+            images={logoUrl ? [logoUrl] : []}
+            onChange={(imgs) => setLogoUrl(imgs[imgs.length - 1] || '')}
+            onUploadingChange={setPhotoUploading}
+          />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">ชื่อบริษัท</label>
@@ -302,10 +307,10 @@ function CompanyProfileSettings() {
         </div>
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || photoUploading}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+          {saving ? 'กำลังบันทึก...' : photoUploading ? 'รอรูปภาพอัปโหลดเสร็จ...' : 'บันทึก'}
         </button>
       </form>
     </div>

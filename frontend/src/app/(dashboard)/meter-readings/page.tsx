@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState, FormEvent } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { PendingRoomReading } from '@/lib/types';
+import { SkeletonRows } from '@/components/Skeleton';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -162,11 +163,7 @@ export default function MeterReadingsPage() {
                 )}
               </Fragment>
             ))}
-            {loading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">กำลังโหลด...</td>
-              </tr>
-            )}
+            {loading && <SkeletonRows count={5} cols={5} />}
             {!loading && rows.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-slate-400">

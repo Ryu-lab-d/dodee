@@ -4,6 +4,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AppTransaction, FinancialSummary, Property, TransactionType } from '@/lib/types';
 import CountUp from '@/components/CountUp';
+import { SkeletonRows } from '@/components/Skeleton';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -285,11 +286,7 @@ export default function ReportsPage() {
                 </td>
               </tr>
             ))}
-            {loading && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
-              </tr>
-            )}
+            {loading && <SkeletonRows count={5} cols={7} />}
             {!loading && transactions.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-slate-400">ยังไม่มีรายการของเดือนนี้</td>

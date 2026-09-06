@@ -4,6 +4,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import { Tenant, Room } from '@/lib/types';
+import { SkeletonRows } from '@/components/Skeleton';
 
 export default function TenantsPage() {
   const { user } = useAuth();
@@ -178,11 +179,7 @@ export default function TenantsPage() {
                 <td className="px-4 py-2 text-slate-600">{t.status}</td>
               </tr>
             ))}
-            {loading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
-              </tr>
-            )}
+            {loading && <SkeletonRows count={5} cols={5} />}
             {!loading && tenants.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400">ยังไม่มีผู้เช่า</td>

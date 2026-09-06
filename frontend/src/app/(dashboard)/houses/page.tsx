@@ -9,6 +9,7 @@ import { Property, PropertyDetail, RoomStatus } from '@/lib/types';
 import ImageUploader from '@/components/ImageUploader';
 import DetailsEditor from '@/components/DetailsEditor';
 import LocationFields, { emptyLocation, LocationValue } from '@/components/LocationFields';
+import { SkeletonCards } from '@/components/Skeleton';
 
 const STATUS_STYLE: Record<RoomStatus, string> = {
   ว่าง: 'bg-green-50 text-green-700',
@@ -30,6 +31,7 @@ export default function HousesPage() {
   const [details, setDetails] = useState<PropertyDetail[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const load = () =>
     api
@@ -144,7 +146,7 @@ export default function HousesPage() {
 
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-slate-700">รูปภาพ</label>
-            <ImageUploader images={images} onChange={setImages} />
+            <ImageUploader images={images} onChange={setImages} onUploadingChange={setPhotoUploading} />
           </div>
 
           <div className="mt-3">
@@ -154,49 +156,52 @@ export default function HousesPage() {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || photoUploading}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+            {saving ? 'กำลังบันทึก...' : photoUploading ? 'รอรูปภาพอัปโหลดเสร็จ...' : 'บันทึก'}
           </button>
         </form>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {houses.map((h, i) => {
-          const unit = h.rooms?.[0];
-          return (
-            <Link
-              key={h.id}
-              href={`/houses/${h.id}`}
-              className="hover-card fade-up overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm hover:border-blue-400"
-              style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
-            >
-              <div className="relative h-32 w-full bg-slate-100">
-                {h.images?.[0] ? (
-                  <Image src={fileUrl(h.images[0])} alt={h.name} fill className="object-cover" unoptimized />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-slate-400">ไม่มีรูปภาพ</div>
-                )}
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-slate-900">{h.name}</p>
-                  {unit && (
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[unit.status]}`}>
-                      {unit.status}
-                    </span>
+      {loading ? (
+        <SkeletonCards />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {houses.map((h, i) => {
+            const unit = h.rooms?.[0];
+            return (
+              <Link
+                key={h.id}
+                href={`/houses/${h.id}`}
+                className="hover-card fade-up overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm hover:border-blue-400"
+                style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
+              >
+                <div className="relative h-32 w-full bg-slate-100">
+                  {h.images?.[0] ? (
+                    <Image src={fileUrl(h.images[0])} alt={h.name} fill className="object-cover" unoptimized />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs text-slate-400">ไม่มีรูปภาพ</div>
                   )}
                 </div>
-                <p className="text-sm text-slate-500">{h.type} · {h.address || 'ไม่ระบุที่อยู่'}</p>
-                {unit && <p className="mt-3 text-sm text-slate-600">ค่าเช่า ฿{Number(unit.baseRentPrice).toLocaleString()}/เดือน</p>}
-              </div>
-            </Link>
-          );
-        })}
-        {loading && <p className="text-sm text-slate-400">กำลังโหลด...</p>}
-        {!loading && houses.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบ้าน/คอนโด</p>}
-      </div>
+                <div className="p-5">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-slate-900">{h.name}</p>
+                    {unit && (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[unit.status]}`}>
+                        {unit.status}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-500">{h.type} · {h.address || 'ไม่ระบุที่อยู่'}</p>
+                  {unit && <p className="mt-3 text-sm text-slate-600">ค่าเช่า ฿{Number(unit.baseRentPrice).toLocaleString()}/เดือน</p>}
+                </div>
+              </Link>
+            );
+          })}
+          {houses.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบ้าน/คอนโด</p>}
+        </div>
+      )}
     </div>
   );
 }

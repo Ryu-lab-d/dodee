@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { Invoice, InvoiceStatus } from '@/lib/types';
+import { SkeletonRows } from '@/components/Skeleton';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -245,11 +246,7 @@ export default function InvoicesPage() {
                 )}
               </Fragment>
             ))}
-            {loading && (
-              <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
-              </tr>
-            )}
+            {loading && <SkeletonRows count={5} cols={8} />}
             {!loading && invoices.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-slate-400">ยังไม่มีใบเรียกเก็บของเดือนนี้</td>

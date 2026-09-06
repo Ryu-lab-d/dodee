@@ -7,9 +7,14 @@ import { api, fileUrl } from '@/lib/api';
 export default function ImageUploader({
   images,
   onChange,
+  onUploadingChange,
 }: {
   images: string[];
   onChange: (images: string[]) => void;
+  // Lets the parent form disable its own submit button while a photo is still
+  // uploading - otherwise submitting mid-upload can save without the new photo,
+  // or race with the upload's own state update after the form has moved on.
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -19,6 +24,7 @@ export default function ImageUploader({
     if (!files || files.length === 0) return;
     setError(null);
     setUploading(true);
+    onUploadingChange?.(true);
     try {
       const uploaded: string[] = [];
       for (const file of Array.from(files)) {
@@ -30,6 +36,7 @@ export default function ImageUploader({
       setError(err instanceof Error ? err.message : 'อัปโหลดรูปไม่สำเร็จ');
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       if (inputRef.current) inputRef.current.value = '';
     }
   };

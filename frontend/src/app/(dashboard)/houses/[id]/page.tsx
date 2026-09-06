@@ -25,6 +25,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
   const [baseRentPrice, setBaseRentPrice] = useState('');
@@ -168,7 +169,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-slate-700">รูปภาพ</label>
-            <ImageUploader images={images} onChange={setImages} />
+            <ImageUploader images={images} onChange={setImages} onUploadingChange={setPhotoUploading} />
           </div>
           <div className="mt-3">
             <label className="mb-1 block text-sm font-medium text-slate-700">รายละเอียดเพิ่มเติม</label>
@@ -176,10 +177,10 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || photoUploading}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+            {saving ? 'กำลังบันทึก...' : photoUploading ? 'รอรูปภาพอัปโหลดเสร็จ...' : 'บันทึก'}
           </button>
         </form>
       ) : (

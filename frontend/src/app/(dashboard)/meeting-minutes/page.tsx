@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/api';
 import { MeetingMinute, PropertyDetail, User } from '@/lib/types';
 import DetailsEditor from '@/components/DetailsEditor';
 import MeetingSuccessModal from '@/components/MeetingSuccessModal';
+import { SkeletonBlock } from '@/components/Skeleton';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -246,7 +247,17 @@ export default function MeetingMinutesPage() {
             )}
           </div>
         ))}
-        {loading && <p className="text-sm text-slate-400">กำลังโหลด...</p>}
+        {loading &&
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <SkeletonBlock className="h-4 w-40" />
+                <SkeletonBlock className="h-3 w-16" />
+              </div>
+              <SkeletonBlock className="h-3 w-24" />
+              <SkeletonBlock className="mt-2 h-3 w-full" />
+            </div>
+          ))}
         {!loading && minutes.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีบันทึกการประชุม</p>}
       </div>
 

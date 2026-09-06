@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { User, Property, Role, UserStatus } from '@/lib/types';
+import { SkeletonRows } from '@/components/Skeleton';
 
 const ROLE_LABEL: Record<Role, string> = {
   owner: 'เจ้าของ',
@@ -328,11 +329,7 @@ export default function StaffPage() {
                 </td>
               </tr>
             ))}
-            {loading && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">กำลังโหลด...</td>
-              </tr>
-            )}
+            {loading && <SkeletonRows count={5} cols={6} />}
             {!loading && users.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400">ยังไม่มีพนักงาน</td>
