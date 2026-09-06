@@ -69,7 +69,7 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
         <h3 className="text-sm font-semibold text-slate-900">ห้อง {room.roomNumber}</h3>
         <div className="flex gap-2">
           {canEdit && !editing && (
-            <button
+            <button type="button"
               onClick={() => {
                 setError(null);
                 setEditing(true);
@@ -80,7 +80,7 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
             </button>
           )}
           {user?.role === 'owner' && !editing && (
-            <button
+            <button type="button"
               onClick={handleDelete}
               className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
             >
@@ -298,7 +298,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         </div>
         <div className="flex shrink-0 gap-2">
           {canEdit && (
-            <button
+            <button type="button"
               onClick={() => setEditingProperty((v) => !v)}
               className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
             >
@@ -306,7 +306,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </button>
           )}
           {user?.role === 'owner' && (
-            <button
+            <button type="button"
               onClick={handleDeleteProperty}
               className="rounded-lg border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
             >
@@ -389,7 +389,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">ห้องทั้งหมด ({rooms.length})</h2>
         {canEdit && (
-          <button
+          <button type="button"
             onClick={() => setShowForm((v) => !v)}
             className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
           >
@@ -440,7 +440,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         {rooms.map((room, i) => {
           const tenant = room.tenants?.find((t) => t.status === 'เช่าอยู่');
           return (
-            <button
+            <button type="button"
               key={room.id}
               onClick={() => setExpandedRoomId(expandedRoomId === room.id ? null : room.id)}
               className={`fade-up overflow-hidden rounded-2xl border-2 bg-white text-left shadow-sm transition ${

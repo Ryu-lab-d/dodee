@@ -106,7 +106,7 @@ export default function MeterReadingsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <button
+                    <button type="button"
                       onClick={() => openForm(room.id)}
                       className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
                     >

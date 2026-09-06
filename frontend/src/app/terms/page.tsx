@@ -150,14 +150,14 @@ export default function TermsPage() {
           </div>
 
           <div className="mt-6 flex gap-3">
-            <button
+            <button type="button"
               onClick={() => setStage('signing')}
               disabled={!checkedRead || !checkedUnderstood}
               className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               ยอมรับ
             </button>
-            <button
+            <button type="button"
               onClick={logout}
               className="rounded-xl px-4 py-3 text-sm font-medium text-slate-400 hover:bg-slate-50"
             >

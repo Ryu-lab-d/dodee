@@ -120,13 +120,13 @@ export default function ReportsPage() {
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button
+          <button type="button"
             onClick={() => downloadCsv(transactions, month)}
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             Export CSV
           </button>
-          <button
+          <button type="button"
             onClick={() => setShowForm((v) => !v)}
             className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
           >
@@ -274,7 +274,7 @@ export default function ReportsPage() {
                   {t.type === 'income' ? '+' : '-'}฿{Number(t.amount).toLocaleString()}
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <button onClick={() => handleDelete(t.id)} className="text-xs font-medium text-slate-400 hover:text-red-600">
+                  <button type="button" onClick={() => handleDelete(t.id)} className="text-xs font-medium text-slate-400 hover:text-red-600">
                     ลบ
                   </button>
                 </td>

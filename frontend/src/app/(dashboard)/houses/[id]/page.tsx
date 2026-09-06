@@ -121,7 +121,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="flex shrink-0 gap-2">
           {canEdit && (
-            <button
+            <button type="button"
               onClick={() => {
                 setError(null);
                 setEditing((v) => !v);
@@ -132,7 +132,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
             </button>
           )}
           {user?.role === 'owner' && (
-            <button
+            <button type="button"
               onClick={handleDelete}
               className="rounded-lg border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
             >

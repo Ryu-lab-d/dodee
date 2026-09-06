@@ -77,7 +77,7 @@ export default function CalendarPage() {
           <p className="text-sm text-slate-500">สัญญาหมดอายุ · ครบกำหนดชำระ · บันทึกการประชุม · วันจดมิเตอร์</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <button type="button"
             onClick={() => changeMonth(-1)}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
             aria-label="เดือนก่อนหน้า"
@@ -87,14 +87,14 @@ export default function CalendarPage() {
           <p className="w-36 text-center text-sm font-semibold text-slate-900">
             {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear() + 543}
           </p>
-          <button
+          <button type="button"
             onClick={() => changeMonth(1)}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
             aria-label="เดือนถัดไป"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <button
+          <button type="button"
             onClick={goToday}
             className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
           >
@@ -133,7 +133,7 @@ export default function CalendarPage() {
               const shown = dayEvents.slice(0, 3);
 
               return (
-                <button
+                <button type="button"
                   key={key}
                   onClick={() => setSelected(key)}
                   className={`flex min-h-20 flex-col items-center gap-1 border-b border-r border-slate-50 p-1.5 text-left transition-colors hover:bg-blue-50/50 sm:min-h-24 sm:items-start sm:p-2 ${

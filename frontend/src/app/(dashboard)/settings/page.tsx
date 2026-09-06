@@ -67,7 +67,7 @@ function MyLineConnection() {
       {connected ? (
         <div>
           <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">เชื่อมต่อแล้ว</span>
-          <button onClick={unlink} className="ml-3 text-xs font-medium text-red-600 hover:text-red-700">
+          <button type="button" onClick={unlink} className="ml-3 text-xs font-medium text-red-600 hover:text-red-700">
             ยกเลิกการเชื่อมต่อ
           </button>
         </div>
@@ -83,14 +83,14 @@ function MyLineConnection() {
                 <li>หน้านี้จะเช็คสถานะให้อัตโนมัติทุก 4 วินาที (หรือกด &quot;เช็คสถานะตอนนี้&quot; ด้านล่าง)</li>
               </ol>
               <div className="mt-3 flex items-center gap-3">
-                <button
+                <button type="button"
                   onClick={checkNow}
                   disabled={checking}
                   className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {checking ? 'กำลังเช็ค...' : 'เช็คสถานะตอนนี้'}
                 </button>
-                <button onClick={generate} className="text-xs font-medium text-slate-500 hover:text-slate-700">
+                <button type="button" onClick={generate} className="text-xs font-medium text-slate-500 hover:text-slate-700">
                   สร้างรหัสใหม่
                 </button>
               </div>
@@ -99,7 +99,7 @@ function MyLineConnection() {
               </p>
             </div>
           ) : (
-            <button
+            <button type="button"
               onClick={generate}
               disabled={loading}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
@@ -153,7 +153,7 @@ function LineOaSettings() {
     <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">ตั้งค่า LINE Official Account (สำหรับแจ้งเตือนทั้งบริษัท)</h2>
-        <button onClick={() => setShowGuide((v) => !v)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+        <button type="button" onClick={() => setShowGuide((v) => !v)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
           {showGuide ? 'ซ่อนวิธีตั้งค่า' : 'ยังไม่รู้วิธีตั้งค่า? ดูวิธีที่นี่'}
         </button>
       </div>

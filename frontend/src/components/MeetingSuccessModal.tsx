@@ -42,13 +42,13 @@ export default function MeetingSuccessModal({
         </p>
 
         <div className="mt-6 flex flex-col gap-2">
-          <button
+          <button type="button"
             onClick={onView}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             ดูข้อมูลการบันทึก
           </button>
-          <button onClick={onClose} className="text-xs font-medium text-slate-400 hover:text-slate-600">
+          <button type="button" onClick={onClose} className="text-xs font-medium text-slate-400 hover:text-slate-600">
             ปิด
           </button>
         </div>

@@ -79,7 +79,7 @@ export default function HousesPage() {
           <p className="text-sm text-slate-500">ทรัพย์สินให้เช่าแบบหลังเดียว/ยูนิตเดียว ไม่แบ่งย่อยเป็นห้อง</p>
         </div>
         {user?.role === 'owner' && (
-          <button
+          <button type="button"
             onClick={() => setShowForm((v) => !v)}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >

@@ -32,7 +32,7 @@ export default function InvoicePrintPage({ params }: { params: Promise<{ id: str
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-4 flex justify-end gap-2 print:hidden">
-        <button
+        <button type="button"
           onClick={() => window.print()}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >

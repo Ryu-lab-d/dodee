@@ -86,21 +86,21 @@ export default function SignaturePad({
         />
 
         <div className="mt-4 flex gap-2">
-          <button
+          <button type="button"
             onClick={confirm}
             disabled={!hasDrawn || confirming}
             className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
           >
             {confirming ? 'กำลังบันทึก...' : 'ยืนยันลายเซ็น'}
           </button>
-          <button
+          <button type="button"
             onClick={clear}
             disabled={confirming}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"
           >
             ล้าง
           </button>
-          <button
+          <button type="button"
             onClick={onCancel}
             disabled={confirming}
             className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-50"

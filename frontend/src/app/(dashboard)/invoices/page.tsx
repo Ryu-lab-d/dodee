@@ -116,7 +116,7 @@ export default function InvoicesPage() {
             onChange={(e) => setMonth(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
-          <button
+          <button type="button"
             onClick={handleGenerate}
             disabled={generating}
             className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
@@ -171,7 +171,7 @@ export default function InvoicesPage() {
                       พิมพ์
                     </Link>
                     {(inv.status === 'issued' || inv.status === 'overdue') && (
-                      <button
+                      <button type="button"
                         onClick={() => openPayForm(inv)}
                         className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
                       >
@@ -179,7 +179,7 @@ export default function InvoicesPage() {
                       </button>
                     )}
                     {inv.status === 'paid' && (
-                      <button
+                      <button type="button"
                         onClick={() => handleUnmark(inv)}
                         className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                       >

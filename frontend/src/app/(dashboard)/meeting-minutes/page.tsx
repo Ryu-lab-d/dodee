@@ -194,7 +194,7 @@ export default function MeetingMinutesPage() {
           <h1 className="text-xl font-semibold text-slate-900">บันทึกการประชุม</h1>
           <p className="text-sm text-slate-500">บันทึกและส่งสรุปการประชุมให้เพื่อนร่วมงานผ่าน LINE</p>
         </div>
-        <button
+        <button type="button"
           onClick={() => setShowCreate(true)}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-md hover:bg-blue-700"
           title="เพิ่มบันทึกการประชุม"
@@ -212,7 +212,7 @@ export default function MeetingMinutesPage() {
             className="hover-card fade-up rounded-2xl border border-blue-100 bg-white shadow-sm"
             style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
           >
-            <button onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} className="w-full p-5 text-left">
+            <button type="button" onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} className="w-full p-5 text-left">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-slate-900">{m.title || 'บันทึกการประชุม'}</p>
                 <span className="text-xs text-slate-400">{m.recordDate}</span>

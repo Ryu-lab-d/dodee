@@ -157,13 +157,13 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
           <p className="text-sm text-slate-600">หมดสัญญา: {activeTenant.contractEndDate}</p>
         )}
         <div className="mt-3 flex gap-2">
-          <button
+          <button type="button"
             onClick={startEdit}
             className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
           >
             แก้ไขข้อมูลผู้เช่า
           </button>
-          <button
+          <button type="button"
             onClick={handleEndTenancy}
             className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
           >
@@ -176,7 +176,7 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
 
   if (!showForm) {
     return (
-      <button
+      <button type="button"
         onClick={() => setShowForm(true)}
         className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
       >

@@ -64,7 +64,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={containerRef}>
-      <button
+      <button type="button"
         onClick={toggle}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
       >
@@ -81,14 +81,14 @@ export default function NotificationBell() {
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
             <p className="text-sm font-semibold text-slate-900">การแจ้งเตือน</p>
             {unread > 0 && (
-              <button onClick={markAllRead} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+              <button type="button" onClick={markAllRead} className="text-xs font-medium text-blue-600 hover:text-blue-700">
                 อ่านทั้งหมด
               </button>
             )}
           </div>
           <div className="max-h-80 overflow-y-auto">
             {items.map((n, i) => (
-              <button
+              <button type="button"
                 key={n.id}
                 onClick={() => !n.readStatus && markRead(n.id)}
                 className={`fade-up block w-full border-b border-slate-50 px-4 py-3 text-left text-sm last:border-0 hover:bg-slate-50 ${

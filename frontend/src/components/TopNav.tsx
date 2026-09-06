@@ -51,7 +51,7 @@ export default function TopNav() {
             <p className="text-sm font-medium text-slate-900">{user?.name}</p>
             <p className="text-xs text-slate-400">{user?.role}</p>
           </div>
-          <button
+          <button type="button"
             onClick={logout}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 md:px-3"
           >

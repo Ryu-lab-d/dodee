@@ -32,7 +32,7 @@ function ActivityLogSection() {
 
   return (
     <div className="mt-6 rounded-2xl border border-blue-100 bg-white shadow-sm">
-      <button
+      <button type="button"
         onClick={() => setShow((v) => !v)}
         className="flex w-full items-center justify-between px-5 py-3 text-left text-sm font-semibold text-slate-900"
       >
@@ -103,14 +103,14 @@ function AssignPropertiesModal({
           {properties.length === 0 && <p className="text-sm text-slate-400">ยังไม่มีทรัพย์สิน</p>}
         </div>
         <div className="mt-4 flex gap-2">
-          <button
+          <button type="button"
             onClick={handleSave}
             disabled={saving}
             className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {saving ? 'กำลังบันทึก...' : 'บันทึก'}
           </button>
-          <button onClick={onClose} className="rounded-lg px-4 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="rounded-lg px-4 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100">
             ปิด
           </button>
         </div>
@@ -191,7 +191,7 @@ export default function StaffPage() {
           <h1 className="text-xl font-semibold text-slate-900">พนักงาน & สิทธิ์การใช้งาน</h1>
           <p className="text-sm text-slate-500">สร้างบัญชีพนักงาน กำหนดบทบาท และมอบหมายทรัพย์สินที่รับผิดชอบ</p>
         </div>
-        <button
+        <button type="button"
           onClick={() => setShowForm((v) => !v)}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
@@ -299,7 +299,7 @@ export default function StaffPage() {
                   {u.role === 'owner' ? (
                     <span className="text-xs text-slate-400">ทั้งหมด</span>
                   ) : (
-                    <button onClick={() => setAssigningUser(u)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                    <button type="button" onClick={() => setAssigningUser(u)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
                       {u.assignedProperties?.length ? `${u.assignedProperties.length} รายการ` : 'ยังไม่ได้มอบหมาย'}
                     </button>
                   )}
@@ -316,7 +316,7 @@ export default function StaffPage() {
                 </td>
                 <td className="px-4 py-2 text-right">
                   {u.id !== user?.id && (
-                    <button onClick={() => toggleStatus(u)} className="text-xs font-medium text-slate-500 hover:text-slate-700">
+                    <button type="button" onClick={() => toggleStatus(u)} className="text-xs font-medium text-slate-500 hover:text-slate-700">
                       {u.status === 'active' ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
                     </button>
                   )}

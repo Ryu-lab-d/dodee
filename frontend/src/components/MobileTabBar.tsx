@@ -73,7 +73,7 @@ export default function MobileTabBar() {
         {PRIMARY_TABS.map((tab) => (
           <TabButton key={tab.href} {...tab} active={isActive(tab.href)} />
         ))}
-        <button
+        <button type="button"
           onClick={() => setMoreOpen(true)}
           className="flex flex-1 flex-col items-center justify-center gap-1 py-1.5 transition-transform active:scale-90"
         >
@@ -84,7 +84,7 @@ export default function MobileTabBar() {
 
       {moreOpen && (
         <div className="fixed inset-0 z-30 md:hidden">
-          <button
+          <button type="button"
             aria-label="ปิด"
             onClick={() => setMoreOpen(false)}
             className="ios-sheet-backdrop absolute inset-0 bg-slate-900/40"
@@ -96,7 +96,7 @@ export default function MobileTabBar() {
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300" />
             <div className="mb-2 flex items-center justify-between px-5">
               <p className="text-sm font-semibold text-slate-900">เมนูทั้งหมด</p>
-              <button
+              <button type="button"
                 onClick={() => setMoreOpen(false)}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-90"
               >
