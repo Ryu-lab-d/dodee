@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState, FormEvent } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError, fileUrl } from '@/lib/api';
 import { Property, PropertyDetail, RoomStatus } from '@/lib/types';
@@ -19,6 +20,7 @@ const STATUS_STYLE: Record<RoomStatus, string> = {
 export default function HouseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const router = useRouter();
   const [house, setHouse] = useState<Property | null>(null);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,25 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
     load();
   };
 
-  if (error) return <p className="text-sm text-red-600">{error}</p>;
+  const handleDelete = async () => {
+    if (!house) return;
+    if (
+      !confirm(
+        `ลบ "${house.name}" ใช่ไหม? การลบจะลบผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของทรัพย์สินนี้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    try {
+      await api.delete(`/properties/${id}`);
+      router.push('/houses');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ');
+    }
+  };
+
+  if (error && !house) return <p className="text-sm text-red-600">{error}</p>;
   if (!house) return <p className="text-sm text-slate-400">กำลังโหลด...</p>;
 
   const unit = house.rooms?.[0];
@@ -99,15 +119,30 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
           <h1 className="text-xl font-semibold text-slate-900">{house.name}</h1>
           <p className="text-sm text-slate-500">{house.type} · {fullAddress || 'ไม่ระบุที่อยู่'}</p>
         </div>
-        {canEdit && (
-          <button
-            onClick={() => setEditing((v) => !v)}
-            className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            {editing ? 'ยกเลิก' : 'แก้ไข'}
-          </button>
-        )}
+        <div className="flex shrink-0 gap-2">
+          {canEdit && (
+            <button
+              onClick={() => {
+                setError(null);
+                setEditing((v) => !v);
+              }}
+              className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              {editing ? 'ยกเลิก' : 'แก้ไข'}
+            </button>
+          )}
+          {user?.role === 'owner' && (
+            <button
+              onClick={handleDelete}
+              className="rounded-lg border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              ลบทรัพย์สิน
+            </button>
+          )}
+        </div>
       </div>
+
+      {error && !editing && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
       {editing ? (
         <form onSubmit={handleSave} className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">

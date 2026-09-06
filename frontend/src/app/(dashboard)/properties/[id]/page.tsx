@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState, FormEvent } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError, fileUrl } from '@/lib/api';
 import { Property, PropertyDetail, Room, RoomStatus } from '@/lib/types';
@@ -22,7 +23,8 @@ const CARD_RING: Record<RoomStatus, string> = {
   ซ่อม: 'border-amber-200',
 };
 
-function RoomDetailPanel({ room, canEdit, onSaved }: { room: Room; canEdit: boolean; onSaved: () => void }) {
+function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; canEdit: boolean; onSaved: () => void; onDeleted: () => void }) {
+  const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [baseRentPrice, setBaseRentPrice] = useState(room.baseRentPrice);
   const [description, setDescription] = useState(room.description || '');
@@ -51,19 +53,43 @@ function RoomDetailPanel({ room, canEdit, onSaved }: { room: Room; canEdit: bool
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm(`ลบห้อง ${room.roomNumber} ใช่ไหม? ผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของห้องนี้จะถูกลบถาวรไปด้วย ย้อนกลับไม่ได้`)) return;
+    try {
+      await api.delete(`/rooms/${room.id}`);
+      onDeleted();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ');
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-blue-100 bg-sky-50 p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-900">ห้อง {room.roomNumber}</h3>
-        {canEdit && !editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
-          >
-            แก้ไขรายละเอียดห้อง
-          </button>
-        )}
+        <div className="flex gap-2">
+          {canEdit && !editing && (
+            <button
+              onClick={() => {
+                setError(null);
+                setEditing(true);
+              }}
+              className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+            >
+              แก้ไขรายละเอียดห้อง
+            </button>
+          )}
+          {user?.role === 'owner' && !editing && (
+            <button
+              onClick={handleDelete}
+              className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+            >
+              ลบห้อง
+            </button>
+          )}
+        </div>
       </div>
+      {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
       {canEdit && (
         <div className="mb-4">
@@ -73,7 +99,6 @@ function RoomDetailPanel({ room, canEdit, onSaved }: { room: Room; canEdit: bool
 
       {editing ? (
         <form onSubmit={handleSave} className="space-y-3">
-          {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700">ค่าเช่า/เดือน (บาท)</label>
             <input
@@ -151,6 +176,7 @@ function RoomDetailPanel({ room, canEdit, onSaved }: { room: Room; canEdit: bool
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [roomNumber, setRoomNumber] = useState('');
@@ -216,6 +242,24 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
+  const handleDeleteProperty = async () => {
+    if (!property) return;
+    if (
+      !confirm(
+        `ลบ "${property.name}" ใช่ไหม? การลบจะลบห้องทั้งหมด ผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของทรัพย์สินนี้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้`
+      )
+    ) {
+      return;
+    }
+    setPropertyError(null);
+    try {
+      await api.delete(`/properties/${id}`);
+      router.push('/properties');
+    } catch (err) {
+      setPropertyError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ');
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -234,7 +278,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  if (error) return <p className="text-sm text-red-600">{error}</p>;
+  if (error && !property) return <p className="text-sm text-red-600">{error}</p>;
   if (!property) return <p className="text-sm text-slate-400">กำลังโหลด...</p>;
 
   const rooms: Room[] = property.rooms || [];
@@ -252,14 +296,24 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               .join(' · ') || 'ไม่ระบุที่อยู่'}
           </p>
         </div>
-        {canEdit && (
-          <button
-            onClick={() => setEditingProperty((v) => !v)}
-            className="shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            {editingProperty ? 'ยกเลิก' : 'แก้ไขทรัพย์สิน'}
-          </button>
-        )}
+        <div className="flex shrink-0 gap-2">
+          {canEdit && (
+            <button
+              onClick={() => setEditingProperty((v) => !v)}
+              className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              {editingProperty ? 'ยกเลิก' : 'แก้ไขทรัพย์สิน'}
+            </button>
+          )}
+          {user?.role === 'owner' && (
+            <button
+              onClick={handleDeleteProperty}
+              className="rounded-lg border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              ลบทรัพย์สิน
+            </button>
+          )}
+        </div>
       </div>
 
       {editingProperty ? (
@@ -346,6 +400,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
       {showForm && (
         <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">เลขห้อง</label>
@@ -415,7 +470,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
       {expandedRoom && (
         <div className="mt-4">
-          <RoomDetailPanel room={expandedRoom} canEdit={canEdit} onSaved={load} />
+          <RoomDetailPanel
+            room={expandedRoom}
+            canEdit={canEdit}
+            onSaved={load}
+            onDeleted={() => {
+              setExpandedRoomId(null);
+              load();
+            }}
+          />
         </div>
       )}
     </div>
