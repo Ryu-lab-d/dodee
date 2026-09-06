@@ -4,9 +4,14 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { Map as LeafletMap, Marker as LeafletMarker, Icon as LeafletIcon, LeafletMouseEvent } from 'leaflet';
 import { Search, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Served as plain static files from /public instead of imported from node_modules:
+// bundling these through Next.js's asset pipeline (StaticImageData) was resolving
+// to an invalid iconUrl in production, which crashed Leaflet as soon as a marker
+// was actually placed ("iconUrl not set in Icon options").
+const MARKER_ICON_URL = '/leaflet/marker-icon.png';
+const MARKER_ICON_2X_URL = '/leaflet/marker-icon-2x.png';
+const MARKER_SHADOW_URL = '/leaflet/marker-shadow.png';
 
 const DEFAULT_CENTER: [number, number] = [13.7563, 100.5018]; // Bangkok
 
@@ -111,9 +116,9 @@ export default function MapPicker({
       if (cancelled || !containerRef.current) return;
 
       const defaultIcon = L.icon({
-        iconUrl: markerIcon.src,
-        iconRetinaUrl: markerIcon2x.src,
-        shadowUrl: markerShadow.src,
+        iconUrl: MARKER_ICON_URL,
+        iconRetinaUrl: MARKER_ICON_2X_URL,
+        shadowUrl: MARKER_SHADOW_URL,
         iconSize: [25, 41],
         iconAnchor: [12, 41],
       });
