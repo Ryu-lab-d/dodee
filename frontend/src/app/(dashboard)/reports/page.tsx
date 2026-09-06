@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AppTransaction, FinancialSummary, Property, TransactionType } from '@/lib/types';
+import CountUp from '@/components/CountUp';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -136,18 +137,22 @@ export default function ReportsPage() {
 
       {summary && (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          <div className="hover-card fade-up rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
             <p className="text-sm text-slate-500">รายรับรวม</p>
-            <p className="mt-1 text-2xl font-semibold text-green-600">฿{summary.totalIncome.toLocaleString()}</p>
+            <p className="mt-1 text-2xl font-semibold text-green-600">
+              ฿<CountUp value={summary.totalIncome} />
+            </p>
           </div>
-          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          <div className="hover-card fade-up rounded-2xl border border-blue-100 bg-white p-5 shadow-sm" style={{ animationDelay: '70ms' }}>
             <p className="text-sm text-slate-500">รายจ่ายรวม</p>
-            <p className="mt-1 text-2xl font-semibold text-red-600">฿{summary.totalExpense.toLocaleString()}</p>
+            <p className="mt-1 text-2xl font-semibold text-red-600">
+              ฿<CountUp value={summary.totalExpense} />
+            </p>
           </div>
-          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          <div className="hover-card fade-up rounded-2xl border border-blue-100 bg-white p-5 shadow-sm" style={{ animationDelay: '140ms' }}>
             <p className="text-sm text-slate-500">กำไร-ขาดทุน</p>
             <p className={`mt-1 text-2xl font-semibold ${summary.profit >= 0 ? 'text-blue-700' : 'text-red-600'}`}>
-              ฿{summary.profit.toLocaleString()}
+              ฿<CountUp value={summary.profit} />
             </p>
           </div>
         </div>
@@ -250,8 +255,12 @@ export default function ReportsPage() {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((t) => (
-              <tr key={t.id} className="border-b border-slate-100 last:border-0">
+            {transactions.map((t, i) => (
+              <tr
+                key={t.id}
+                className="fade-up border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/50"
+                style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+              >
                 <td className="px-4 py-2 text-slate-600">{t.date}</td>
                 <td className="px-4 py-2">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${t.type === 'income' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>

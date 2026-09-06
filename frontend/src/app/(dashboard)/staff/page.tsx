@@ -41,8 +41,12 @@ function ActivityLogSection() {
       </button>
       {show && (
         <div className="max-h-96 overflow-y-auto border-t border-slate-100">
-          {logs.map((log) => (
-            <div key={log.id} className="border-b border-slate-50 px-5 py-2.5 text-sm last:border-0">
+          {logs.map((log, i) => (
+            <div
+              key={log.id}
+              className="fade-up border-b border-slate-50 px-5 py-2.5 text-sm last:border-0"
+              style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
+            >
               <p className="text-slate-700">
                 <span className="font-medium text-slate-900">{log.userName}</span> {log.description}
               </p>
@@ -266,8 +270,12 @@ export default function StaffPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-slate-100 last:border-0">
+            {users.map((u, i) => (
+              <tr
+                key={u.id}
+                className="fade-up border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/50"
+                style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+              >
                 <td className="px-4 py-2 text-slate-900">
                   {u.name}
                   <span className="ml-1 text-xs text-slate-400">@{u.username}</span>

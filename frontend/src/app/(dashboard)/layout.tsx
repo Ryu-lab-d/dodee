@@ -34,7 +34,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
       <TopNav />
-      <main className="mx-auto w-full max-w-6xl flex-1 p-4 pb-24 md:p-6 md:pb-6">{children}</main>
+      <main key={pathname} className="page-fade-in mx-auto w-full max-w-6xl flex-1 p-4 pb-24 md:p-6 md:pb-6">
+        {children}
+      </main>
       <MobileTabBar />
     </div>
   );

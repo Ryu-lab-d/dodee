@@ -85,9 +85,12 @@ export default function MeterReadingsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ room, latestReading, hasReadingThisMonth }) => (
+            {rows.map(({ room, latestReading, hasReadingThisMonth }, i) => (
               <Fragment key={room.id}>
-                <tr className="border-b border-slate-100 last:border-0">
+                <tr
+                  className="fade-up border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/50"
+                  style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+                >
                   <td className="px-4 py-2 text-slate-900">
                     {room.property?.name}{room.roomNumber !== 'หลัก' ? ` - ห้อง ${room.roomNumber}` : ''}
                   </td>

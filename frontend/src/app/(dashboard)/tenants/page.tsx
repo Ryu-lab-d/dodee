@@ -160,8 +160,12 @@ export default function TenantsPage() {
             </tr>
           </thead>
           <tbody>
-            {tenants.map((t) => (
-              <tr key={t.id} className="border-b border-slate-100 last:border-0">
+            {tenants.map((t, i) => (
+              <tr
+                key={t.id}
+                className="fade-up border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/50"
+                style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+              >
                 <td className="px-4 py-2 text-slate-900">{t.name}</td>
                 <td className="px-4 py-2 text-slate-600">{t.room?.roomNumber || '-'}</td>
                 <td className="px-4 py-2 text-slate-600">{t.phone || '-'}</td>

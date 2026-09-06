@@ -206,8 +206,12 @@ export default function MeetingMinutesPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="space-y-3">
-        {minutes.map((m) => (
-          <div key={m.id} className="rounded-2xl border border-blue-100 bg-white shadow-sm">
+        {minutes.map((m, i) => (
+          <div
+            key={m.id}
+            className="hover-card fade-up rounded-2xl border border-blue-100 bg-white shadow-sm"
+            style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
+          >
             <button onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} className="w-full p-5 text-left">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-slate-900">{m.title || 'บันทึกการประชุม'}</p>

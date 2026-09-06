@@ -125,11 +125,12 @@ export default function PropertiesPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {properties.map((p) => (
+        {properties.map((p, i) => (
           <Link
             key={p.id}
             href={`/properties/${p.id}`}
-            className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm hover:border-blue-400"
+            className="hover-card fade-up overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm hover:border-blue-400"
+            style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
           >
             <div className="relative h-32 w-full bg-slate-100">
               {p.images?.[0] ? (

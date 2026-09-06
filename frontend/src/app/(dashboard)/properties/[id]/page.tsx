@@ -278,15 +278,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {rooms.map((room) => {
+        {rooms.map((room, i) => {
           const tenant = room.tenants?.find((t) => t.status === 'เช่าอยู่');
           return (
             <button
               key={room.id}
               onClick={() => setExpandedRoomId(expandedRoomId === room.id ? null : room.id)}
-              className={`overflow-hidden rounded-2xl border-2 bg-white text-left shadow-sm transition ${
+              className={`fade-up overflow-hidden rounded-2xl border-2 bg-white text-left shadow-sm transition ${
                 expandedRoomId === room.id ? 'border-blue-500' : CARD_RING[room.status]
               }`}
+              style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
             >
               <div className="relative h-20 w-full bg-slate-100">
                 {room.images?.[0] ? (

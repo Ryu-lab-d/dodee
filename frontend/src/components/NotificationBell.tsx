@@ -68,7 +68,7 @@ export default function NotificationBell() {
         onClick={toggle}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className={`h-5 w-5 ${unread > 0 ? 'bell-ring' : ''}`} />
         {unread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
             {unread > 9 ? '9+' : unread}
@@ -77,7 +77,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-blue-100 bg-white shadow-lg">
+        <div className="dropdown-in absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-blue-100 bg-white shadow-lg">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
             <p className="text-sm font-semibold text-slate-900">การแจ้งเตือน</p>
             {unread > 0 && (
@@ -87,13 +87,14 @@ export default function NotificationBell() {
             )}
           </div>
           <div className="max-h-80 overflow-y-auto">
-            {items.map((n) => (
+            {items.map((n, i) => (
               <button
                 key={n.id}
                 onClick={() => !n.readStatus && markRead(n.id)}
-                className={`block w-full border-b border-slate-50 px-4 py-3 text-left text-sm last:border-0 hover:bg-slate-50 ${
+                className={`fade-up block w-full border-b border-slate-50 px-4 py-3 text-left text-sm last:border-0 hover:bg-slate-50 ${
                   n.readStatus ? 'text-slate-500' : 'bg-blue-50/50 text-slate-800'
                 }`}
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
               >
                 <p className="leading-snug">{n.message}</p>
                 <p className="mt-1 text-xs text-slate-400">{timeAgo(n.sentDate)}</p>

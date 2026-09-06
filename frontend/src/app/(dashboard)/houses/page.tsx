@@ -158,13 +158,14 @@ export default function HousesPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {houses.map((h) => {
+        {houses.map((h, i) => {
           const unit = h.rooms?.[0];
           return (
             <Link
               key={h.id}
               href={`/houses/${h.id}`}
-              className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm hover:border-blue-400"
+              className="hover-card fade-up overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm hover:border-blue-400"
+              style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
             >
               <div className="relative h-32 w-full bg-slate-100">
                 {h.images?.[0] ? (
