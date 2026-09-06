@@ -128,6 +128,75 @@ function DashboardMockup() {
   );
 }
 
+function LoginMockup() {
+  return (
+    <BrowserFrame title="do-dee.vercel.app/login">
+      <div className="flex items-center justify-center bg-gradient-to-b from-blue-100 to-sky-50 py-6">
+        <div className="w-full max-w-[150px] rounded-xl border border-slate-100 bg-white p-4 shadow-md">
+          <p className="mb-3 text-center text-[11px] font-extrabold">
+            <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">Do Dee</span>
+          </p>
+          <p className="mb-1 text-[8px] text-slate-500">ชื่อผู้ใช้</p>
+          <div className="mb-2 h-4 rounded border border-slate-200" />
+          <p className="mb-1 text-[8px] text-slate-500">รหัสผ่าน</p>
+          <div className="mb-3 h-4 rounded border border-slate-200" />
+          <div className="rounded-md bg-gradient-to-r from-blue-600 to-blue-700 py-1.5 text-center text-[9px] font-bold text-white">
+            เข้าสู่ระบบ
+          </div>
+        </div>
+      </div>
+    </BrowserFrame>
+  );
+}
+
+function PropertiesMockup() {
+  const cards = [
+    { name: 'หอพักสุขใจ', area: 'บางนา', color: 'from-blue-300 to-blue-500' },
+    { name: 'อพาร์ตเมนต์ดี', area: 'ลาดพร้าว', color: 'from-emerald-300 to-emerald-500' },
+    { name: 'คอนโดริมทาง', area: 'รังสิต', color: 'from-amber-300 to-amber-500' },
+  ];
+  return (
+    <BrowserFrame title="do-dee.vercel.app/properties">
+      <div className="grid grid-cols-3 gap-2">
+        {cards.map((c) => (
+          <div key={c.name} className="overflow-hidden rounded-lg border border-slate-100 bg-white">
+            <div className={`h-10 bg-gradient-to-br ${c.color}`} />
+            <div className="px-2 py-1.5">
+              <p className="truncate text-[9.5px] font-semibold text-slate-900">{c.name}</p>
+              <p className="text-[8px] text-slate-400">{c.area}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </BrowserFrame>
+  );
+}
+
+function StaffMockup() {
+  const rows = [
+    { name: 'คุณวราภรณ์', role: 'พนักงาน' },
+    { name: 'คุณอนุชา', role: 'บัญชี' },
+  ];
+  return (
+    <BrowserFrame title="do-dee.vercel.app/staff">
+      <div className="rounded-xl border border-slate-100 bg-white p-3">
+        <div className="mb-1.5 flex justify-between text-[9px] font-semibold text-slate-500">
+          <span>ชื่อ</span>
+          <span>สถานะ</span>
+        </div>
+        {rows.map((r) => (
+          <div key={r.name} className="flex items-center justify-between border-t border-slate-50 py-1.5 text-[10px]">
+            <span className="text-slate-700">
+              {r.name} <span className="text-slate-400">· {r.role}</span>
+            </span>
+            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8.5px] font-medium text-emerald-600">ใช้งาน</span>
+          </div>
+        ))}
+      </div>
+    </BrowserFrame>
+  );
+}
+
 function InvoiceMockup() {
   return (
     <BrowserFrame title="do-dee.vercel.app/invoices">
@@ -427,33 +496,55 @@ export default function AboutPage() {
         </Reveal>
 
         <div className="mt-12 grid grid-cols-1 items-start gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <Reveal className="sm:col-span-2 lg:col-span-2">
-            <p className="mb-3 text-center text-sm font-medium text-slate-500">แดชบอร์ดภาพรวมธุรกิจ</p>
+          <Reveal>
+            <p className="mb-3 text-center text-sm font-medium text-slate-500">เข้าสู่ระบบ</p>
             <div className="float-slow">
+              <LoginMockup />
+            </div>
+          </Reveal>
+          <Reveal delayMs={80} className="sm:col-span-2">
+            <p className="mb-3 text-center text-sm font-medium text-slate-500">แดชบอร์ดภาพรวมธุรกิจ</p>
+            <div className="float-slow-delay">
               <DashboardMockup />
             </div>
           </Reveal>
-          <Reveal delayMs={100}>
-            <p className="mb-3 text-center text-sm font-medium text-slate-500">ใบแจ้งหนี้อัตโนมัติ</p>
-            <div className="float-slow-delay">
-              <InvoiceMockup />
-            </div>
-          </Reveal>
-          <Reveal delayMs={200}>
+          <Reveal delayMs={160}>
             <p className="mb-3 text-center text-sm font-medium text-slate-500">แจ้งเตือนผ่าน LINE</p>
             <div className="float-slow">
               <LineCardMockup />
             </div>
           </Reveal>
         </div>
-        <Reveal className="mt-8 flex justify-center" delayMs={100}>
-          <div>
+
+        <div className="mt-8 grid grid-cols-1 items-start gap-8 sm:grid-cols-2">
+          <Reveal delayMs={80}>
+            <p className="mb-3 text-center text-sm font-medium text-slate-500">รายการหอพัก</p>
+            <div className="float-slow-delay">
+              <PropertiesMockup />
+            </div>
+          </Reveal>
+          <Reveal delayMs={160}>
+            <p className="mb-3 text-center text-sm font-medium text-slate-500">ใบแจ้งหนี้อัตโนมัติ</p>
+            <div className="float-slow">
+              <InvoiceMockup />
+            </div>
+          </Reveal>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 items-start justify-items-center gap-8 sm:grid-cols-2">
+          <Reveal>
             <p className="mb-3 text-center text-sm font-medium text-slate-500">หน้าจอบนมือถือ</p>
             <div className="float-slow-delay">
               <PhoneMockup />
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+          <Reveal delayMs={80} className="w-full max-w-sm">
+            <p className="mb-3 text-center text-sm font-medium text-slate-500">จัดการพนักงาน & สิทธิ์</p>
+            <div className="float-slow">
+              <StaffMockup />
+            </div>
+          </Reveal>
+        </div>
       </section>
 
       {/* How it works */}
