@@ -21,3 +21,4 @@ frontend/.vercel
 .DS_Store
 *.pem
 npm-debug.log*
+.claude/
