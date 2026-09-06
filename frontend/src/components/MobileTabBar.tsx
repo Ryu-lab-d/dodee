@@ -14,6 +14,7 @@ import {
   Home,
   Wallet,
   NotebookPen,
+  CalendarDays,
   UserCog,
   Settings,
   type LucideIcon,
@@ -32,6 +33,7 @@ const MORE_ITEMS: Array<{ href: string; label: string; icon: LucideIcon; ownerOn
   { href: '/houses', label: 'บ้าน & คอนโด', icon: Home },
   { href: '/reports', label: 'รายรับ-รายจ่าย', icon: Wallet },
   { href: '/meeting-minutes', label: 'บันทึกการประชุม', icon: NotebookPen },
+  { href: '/calendar', label: 'ปฏิทิน', icon: CalendarDays },
   { href: '/staff', label: 'พนักงาน', icon: UserCog, ownerOnly: true },
   { href: '/settings', label: 'ตั้งค่า', icon: Settings },
 ];

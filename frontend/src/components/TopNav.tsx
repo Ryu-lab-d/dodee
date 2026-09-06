@@ -12,6 +12,7 @@ import {
   Receipt,
   Wallet,
   NotebookPen,
+  CalendarDays,
   UserCog,
   Settings,
   LogOut,
@@ -29,6 +30,7 @@ const NAV_ITEMS: Array<{ href: string; label: string; icon: LucideIcon; ownerOnl
   { href: '/invoices', label: 'บิล & ชำระเงิน', icon: Receipt },
   { href: '/reports', label: 'รายรับ-รายจ่าย', icon: Wallet },
   { href: '/meeting-minutes', label: 'บันทึกการประชุม', icon: NotebookPen },
+  { href: '/calendar', label: 'ปฏิทิน', icon: CalendarDays },
   { href: '/staff', label: 'พนักงาน', icon: UserCog, ownerOnly: true },
   { href: '/settings', label: 'ตั้งค่า', icon: Settings },
 ];

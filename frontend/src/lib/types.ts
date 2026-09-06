@@ -160,6 +160,17 @@ export interface FinancialSummary {
   byCategory: Array<{ type: TransactionType; category: string; amount: number }>;
 }
 
+export type CalendarEventType = 'contract_end' | 'invoice_due' | 'meeting' | 'meter_reading';
+
+export interface CalendarEvent {
+  id: string;
+  date: string;
+  type: CalendarEventType;
+  title: string;
+  status?: InvoiceStatus;
+  link: string;
+}
+
 export interface DashboardSummary {
   totalProperties: number;
   activeTenants: number;
