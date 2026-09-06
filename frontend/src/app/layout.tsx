@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
@@ -11,6 +11,10 @@ const notoSansThai = Noto_Sans_Thai({
 export const metadata: Metadata = {
   title: "DoDee - ระบบจัดการหอพัก",
   description: "Property Management System",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0e7490",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
