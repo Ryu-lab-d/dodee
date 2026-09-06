@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { Map as LeafletMap, Marker as LeafletMarker, Icon as LeafletIcon, LeafletMouseEvent } from 'leaflet';
 import { Search, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -56,8 +56,7 @@ export default function MapPicker({
     onChange(nextLat, nextLng);
   };
 
-  const handleSearch = async (e: FormEvent) => {
-    e.preventDefault();
+  const runSearch = async () => {
     const q = query.trim();
     if (!q) return;
     setSearchError(null);
@@ -87,6 +86,13 @@ export default function MapPicker({
       setSearchError('ค้นหาไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      runSearch();
     }
   };
 
@@ -156,12 +162,18 @@ export default function MapPicker({
 
   return (
     <div>
-      <form onSubmit={handleSearch} className="relative mb-2 flex gap-2">
+      {/* Not a <form>: this sits inside the property form's own <form>, and nested
+          <form> elements are invalid HTML - the browser drops the inner one and the
+          "search" button ends up submitting the outer property form instead (looks
+          like the whole page just reloads). Enter-to-search and the button's onClick
+          call the same handler directly instead. */}
+      <div className="relative mb-2 flex gap-2">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleInputKeyDown}
             placeholder="ค้นหาชื่อหมู่บ้าน/สถานที่ หรือใส่พิกัด เช่น 13.7563, 100.5018"
             className="w-full rounded-lg border border-slate-300 py-2 pl-8 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
@@ -181,14 +193,15 @@ export default function MapPicker({
           )}
         </div>
         <button
-          type="submit"
+          type="button"
+          onClick={runSearch}
           disabled={searching}
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           ค้นหา
         </button>
-      </form>
+      </div>
       {searchError && <p className="mb-2 text-xs text-red-600">{searchError}</p>}
 
       <div ref={containerRef} className="h-64 w-full overflow-hidden rounded-xl border border-slate-200" />
