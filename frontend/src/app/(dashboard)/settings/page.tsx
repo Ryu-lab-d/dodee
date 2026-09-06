@@ -220,25 +220,29 @@ function LineOaSettings() {
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
       {notice && <div className="mb-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</div>}
 
-      <form onSubmit={handleSave} className="space-y-3">
+      <form onSubmit={handleSave} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Channel Access Token</label>
-          <input
-            type="password"
+          <p className="mb-1.5 text-xs text-slate-400">
+            ค่าตัวยาวจาก LINE Developers Console (แท็บ Messaging API) - วางทั้งก้อนได้เลย ระบบตัดช่องว่างหน้า-หลังให้อัตโนมัติ
+          </p>
+          <textarea
+            rows={3}
             disabled={locked}
-            placeholder={data?.accessTokenConfigured ? data.accessTokenPreview || 'ตั้งค่าแล้ว' : 'ยังไม่ได้ตั้งค่า'}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+            placeholder={data?.accessTokenConfigured ? data.accessTokenPreview || 'ตั้งค่าแล้ว' : 'วาง Channel Access Token ที่นี่'}
+            className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs leading-relaxed outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
             value={accessToken}
             onChange={(e) => setAccessToken(e.target.value)}
           />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Channel Secret</label>
+          <p className="mb-1.5 text-xs text-slate-400">ค่าสั้นจากแท็บ Basic settings</p>
           <input
-            type="password"
+            type="text"
             disabled={locked}
-            placeholder={data?.channelSecretConfigured ? data.channelSecretPreview || 'ตั้งค่าแล้ว' : 'ยังไม่ได้ตั้งค่า'}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+            placeholder={data?.channelSecretConfigured ? data.channelSecretPreview || 'ตั้งค่าแล้ว' : 'วาง Channel Secret ที่นี่'}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
             value={channelSecret}
             onChange={(e) => setChannelSecret(e.target.value)}
           />

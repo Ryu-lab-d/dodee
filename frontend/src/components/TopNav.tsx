@@ -70,24 +70,28 @@ export default function TopNav() {
         </div>
       </div>
 
-      {/* Fixed 6-column grid (not auto-fit) so a trailing item never wraps alone onto its
-          own row - it always lands in the last column of a shared row with its neighbors. */}
-      <nav className="mx-auto hidden max-w-6xl grid-cols-6 gap-x-2 gap-y-5 px-6 pb-6 md:grid">
+      {/* Fixed 12-column grid: with at most 12 items (owner) this can never wrap to a
+          second row - every item always shares row 1 with the others. Tile size steps
+          up at each breakpoint (still always <=12 columns) so it stays comfortably
+          large on a real desktop without ever overflowing the row on a narrower one. */}
+      <nav className="mx-auto hidden max-w-6xl grid-cols-12 gap-x-1 gap-y-4 px-6 pb-6 md:grid lg:gap-x-1.5 xl:gap-x-2">
         {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
           return (
-            <Link key={item.href} href={item.href} className="group flex flex-col items-center justify-self-center gap-2">
+            <Link key={item.href} href={item.href} className="group flex flex-col items-center justify-self-center gap-1.5 lg:gap-2">
               <span
-                className={`flex h-24 w-24 items-center justify-center rounded-[1.75rem] border transition-all duration-150 ${
+                className={`flex h-[52px] w-[52px] items-center justify-center rounded-2xl border transition-all duration-150 lg:h-[68px] lg:w-[68px] lg:rounded-[1.5rem] xl:h-20 xl:w-20 xl:rounded-[1.75rem] ${
                   active
                     ? 'border-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-200'
                     : 'border-slate-100 bg-slate-50 text-slate-500 shadow-sm group-hover:-translate-y-0.5 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:shadow-md'
                 }`}
               >
-                <Icon className="h-11 w-11" strokeWidth={active ? 2.1 : 1.8} />
+                <Icon className="h-5 w-5 lg:h-7 lg:w-7 xl:h-9 xl:w-9" strokeWidth={active ? 2.1 : 1.8} />
               </span>
-              <span className={`text-sm font-medium ${active ? 'text-blue-700' : 'text-slate-500'}`}>
+              <span
+                className={`text-center text-[9px] leading-tight font-medium lg:text-[11px] xl:text-sm ${active ? 'text-blue-700' : 'text-slate-500'}`}
+              >
                 {item.label}
               </span>
             </Link>
