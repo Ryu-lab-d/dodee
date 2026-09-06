@@ -8,6 +8,7 @@ import { Property, PropertyDetail, Room, RoomStatus } from '@/lib/types';
 import ImageUploader from '@/components/ImageUploader';
 import DetailsEditor from '@/components/DetailsEditor';
 import TenantAssignPanel from '@/components/TenantAssignPanel';
+import LocationFields, { emptyLocation, LocationValue } from '@/components/LocationFields';
 
 const STATUS_STYLE: Record<RoomStatus, string> = {
   ว่าง: 'bg-green-50 text-green-700 ring-1 ring-green-200',
@@ -159,12 +160,61 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const load = () => api.get<Property>(`/properties/${id}`).then(setProperty).catch((err) => setError(err.message));
+  const [editingProperty, setEditingProperty] = useState(false);
+  const [propName, setPropName] = useState('');
+  const [propLocation, setPropLocation] = useState<LocationValue>(emptyLocation);
+  const [propDescription, setPropDescription] = useState('');
+  const [propImages, setPropImages] = useState<string[]>([]);
+  const [propDetails, setPropDetails] = useState<PropertyDetail[]>([]);
+  const [savingProperty, setSavingProperty] = useState(false);
+  const [propertyError, setPropertyError] = useState<string | null>(null);
+
+  const load = () =>
+    api
+      .get<Property>(`/properties/${id}`)
+      .then((p) => {
+        setProperty(p);
+        setPropName(p.name);
+        setPropLocation({
+          address: p.address || '',
+          subdistrict: p.subdistrict || '',
+          district: p.district || '',
+          province: p.province || '',
+          postalCode: p.postalCode || '',
+          latitude: p.latitude != null ? Number(p.latitude) : null,
+          longitude: p.longitude != null ? Number(p.longitude) : null,
+        });
+        setPropDescription(p.description || '');
+        setPropImages(p.images || []);
+        setPropDetails(p.details || []);
+      })
+      .catch((err) => setError(err.message));
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleSaveProperty = async (e: FormEvent) => {
+    e.preventDefault();
+    setPropertyError(null);
+    setSavingProperty(true);
+    try {
+      await api.put(`/properties/${id}`, {
+        name: propName,
+        ...propLocation,
+        description: propDescription || undefined,
+        images: propImages,
+        details: propDetails.filter((d) => d.label.trim() && d.value.trim()),
+      });
+      setEditingProperty(false);
+      load();
+    } catch (err) {
+      setPropertyError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ');
+    } finally {
+      setSavingProperty(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -193,39 +243,93 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900">{property.name}</h1>
-        <p className="text-sm text-slate-500">
-          {[property.address, property.subdistrict, property.district, property.province, property.postalCode]
-            .filter(Boolean)
-            .join(' · ') || 'ไม่ระบุที่อยู่'}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">{property.name}</h1>
+          <p className="text-sm text-slate-500">
+            {[property.address, property.subdistrict, property.district, property.province, property.postalCode]
+              .filter(Boolean)
+              .join(' · ') || 'ไม่ระบุที่อยู่'}
+          </p>
+        </div>
+        {canEdit && (
+          <button
+            onClick={() => setEditingProperty((v) => !v)}
+            className="shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            {editingProperty ? 'ยกเลิก' : 'แก้ไขทรัพย์สิน'}
+          </button>
+        )}
       </div>
 
-      {property.images.length > 0 && (
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {property.images.map((img) => (
-            <div key={img} className="relative h-28 overflow-hidden rounded-xl border border-slate-200">
-              <Image src={fileUrl(img)} alt={property.name} fill className="object-cover" unoptimized />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {(property.description || property.details.length > 0) && (
-        <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
-          {property.description && <p className="mb-3 whitespace-pre-line text-sm text-slate-600">{property.description}</p>}
-          {property.details.length > 0 && (
-            <dl className="divide-y divide-slate-100 text-sm">
-              {property.details.map((d, idx) => (
-                <div key={idx} className="flex justify-between py-1.5">
-                  <dt className="text-slate-500">{d.label}</dt>
-                  <dd className="text-slate-900">{d.value}</dd>
+      {editingProperty ? (
+        <form onSubmit={handleSaveProperty} className="mb-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          {propertyError && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{propertyError}</div>}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">ชื่อหอพัก</label>
+            <input
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={propName}
+              onChange={(e) => setPropName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mt-3">
+            <LocationFields value={propLocation} onChange={(patch) => setPropLocation((v) => ({ ...v, ...patch }))} />
+          </div>
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium text-slate-700">คำอธิบาย</label>
+            <textarea
+              rows={3}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={propDescription}
+              onChange={(e) => setPropDescription(e.target.value)}
+            />
+          </div>
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium text-slate-700">รูปภาพ</label>
+            <ImageUploader images={propImages} onChange={setPropImages} />
+          </div>
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium text-slate-700">รายละเอียดเพิ่มเติม</label>
+            <DetailsEditor details={propDetails} onChange={setPropDetails} />
+          </div>
+          <button
+            type="submit"
+            disabled={savingProperty}
+            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {savingProperty ? 'กำลังบันทึก...' : 'บันทึก'}
+          </button>
+        </form>
+      ) : (
+        <>
+          {property.images.length > 0 && (
+            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {property.images.map((img) => (
+                <div key={img} className="relative h-28 overflow-hidden rounded-xl border border-slate-200">
+                  <Image src={fileUrl(img)} alt={property.name} fill className="object-cover" unoptimized />
                 </div>
               ))}
-            </dl>
+            </div>
           )}
-        </div>
+
+          {(property.description || property.details.length > 0) && (
+            <div className="mb-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+              {property.description && <p className="mb-3 whitespace-pre-line text-sm text-slate-600">{property.description}</p>}
+              {property.details.length > 0 && (
+                <dl className="divide-y divide-slate-100 text-sm">
+                  {property.details.map((d, idx) => (
+                    <div key={idx} className="flex justify-between py-1.5">
+                      <dt className="text-slate-500">{d.label}</dt>
+                      <dd className="text-slate-900">{d.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       <div className="mb-4 flex items-center justify-between">
