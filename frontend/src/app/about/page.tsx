@@ -22,9 +22,11 @@ import {
   Sparkles,
   ArrowRight,
   ClipboardList,
+  MessageCircle,
   type LucideIcon,
 } from 'lucide-react';
 import CountUp from '@/components/CountUp';
+import { SUPPORT_LINE_URL } from '@/lib/constants';
 
 function Reveal({
   children,
@@ -581,13 +583,24 @@ export default function AboutPage() {
           <p className="mx-auto mt-3 max-w-xl text-blue-100">
             Do Dee ช่วยให้คุณดูแลทรัพย์สินทุกแห่งได้จากที่เดียว ลดงานซ้ำซ้อน และไม่พลาดทุกการแจ้งเตือนสำคัญ
           </p>
-          <Link
-            href="/login"
-            className="mt-7 inline-flex items-center gap-1.5 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-blue-700 shadow-lg transition hover:bg-blue-50"
-          >
-            เริ่มใช้งาน Do Dee
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/login"
+              className="btn-press inline-flex items-center gap-1.5 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-blue-700 shadow-lg transition hover:bg-blue-50"
+            >
+              เริ่มใช้งาน Do Dee
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href={SUPPORT_LINE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-press inline-flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              <MessageCircle className="h-4 w-4" />
+              สนใจใช้งาน? คลิกที่นี่
+            </a>
+          </div>
         </Reveal>
       </section>
 
