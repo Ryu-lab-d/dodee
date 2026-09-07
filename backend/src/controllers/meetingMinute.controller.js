@@ -77,4 +77,12 @@ const create = asyncHandler(async (req, res) => {
   res.status(201).json({ minute, pushResults });
 });
 
-module.exports = { list, getOne, create };
+const remove = asyncHandler(async (req, res) => {
+  const minute = await MeetingMinute.findByPk(req.params.id);
+  if (!minute) return res.status(404).json({ message: 'Meeting minute not found' });
+  await minute.destroy();
+  logActivity(req.user, 'delete_meeting_minute', `ลบบันทึกการประชุม "${minute.title || 'ไม่มีหัวข้อ'}"`);
+  res.status(204).send();
+});
+
+module.exports = { list, getOne, create, remove };

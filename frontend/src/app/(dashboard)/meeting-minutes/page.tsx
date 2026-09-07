@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, MouseEvent } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import { MeetingMinute, PropertyDetail, User } from '@/lib/types';
@@ -194,6 +194,17 @@ export default function MeetingMinutesPage() {
     load();
   };
 
+  const handleDelete = async (minute: MeetingMinute, e: MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`ลบบันทึกการประชุม "${minute.title || 'บันทึกการประชุม'}" ใช่หรือไม่?`)) return;
+    try {
+      await api.delete(`/meeting-minutes/${minute.id}`);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ');
+    }
+  };
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -242,7 +253,14 @@ export default function MeetingMinutesPage() {
                     ))}
                   </dl>
                 )}
-                <p className="text-xs text-slate-400">ส่งถึง {m.recipientIds.length} คน</p>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <p className="text-xs text-slate-400">ส่งถึง {m.recipientIds.length} คน</p>
+                  {user?.role === 'owner' && (
+                    <button type="button" onClick={(e) => handleDelete(m, e)} className="text-xs font-medium text-red-500 hover:text-red-600">
+                      ลบบันทึกนี้
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>

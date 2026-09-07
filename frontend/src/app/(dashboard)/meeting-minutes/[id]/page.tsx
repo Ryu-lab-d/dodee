@@ -2,17 +2,34 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
+import { api, ApiError } from '@/lib/api';
 import { MeetingMinute } from '@/lib/types';
 
 export default function MeetingMinuteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { user } = useAuth();
+  const router = useRouter();
   const [minute, setMinute] = useState<MeetingMinute | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api.get<MeetingMinute>(`/meeting-minutes/${id}`).then(setMinute).catch((err) => setError(err.message));
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!minute || !confirm(`ลบบันทึกการประชุม "${minute.title || 'บันทึกการประชุม'}" ใช่หรือไม่?`)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/meeting-minutes/${id}`);
+      router.push('/meeting-minutes');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ');
+      setDeleting(false);
+    }
+  };
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!minute) return <p className="text-sm text-slate-400">กำลังโหลด...</p>;
@@ -24,9 +41,21 @@ export default function MeetingMinuteDetailPage({ params }: { params: Promise<{ 
       </Link>
 
       <div className="rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-4 flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-slate-900">{minute.title || 'บันทึกการประชุม'}</h1>
-          <span className="whitespace-nowrap text-xs text-slate-400">{minute.recordDate}</span>
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="whitespace-nowrap text-xs text-slate-400">{minute.recordDate}</span>
+            {user?.role === 'owner' && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-xs font-medium text-red-500 hover:text-red-600 disabled:opacity-50"
+              >
+                {deleting ? 'กำลังลบ...' : 'ลบ'}
+              </button>
+            )}
+          </div>
         </div>
         <p className="mb-4 text-sm text-slate-500">บันทึกโดย {minute.recordedByName}</p>
 
