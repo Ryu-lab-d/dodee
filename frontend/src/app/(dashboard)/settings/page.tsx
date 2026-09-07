@@ -4,6 +4,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import ImageUploader from '@/components/ImageUploader';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 interface LineSettingsResponse {
   accessTokenConfigured: boolean;
@@ -115,6 +116,7 @@ function MyLineConnection() {
 }
 
 function LineOaSettings() {
+  const confirmDialog = useConfirm();
   const [data, setData] = useState<LineSettingsResponse | null>(null);
   const [accessToken, setAccessToken] = useState('');
   const [channelSecret, setChannelSecret] = useState('');
@@ -132,12 +134,13 @@ function LineOaSettings() {
 
   const locked = !!data?.locked && !unlocked;
 
-  const requestUnlock = () => {
-    if (
-      confirm(
-        'การแก้ไขค่านี้อาจทำให้การแจ้งเตือนอัตโนมัติผ่าน LINE หยุดทำงานชั่วคราวจนกว่าจะตั้งค่าใหม่ถูกต้อง ยืนยันว่าต้องการแก้ไข?'
-      )
-    ) {
+  const requestUnlock = async () => {
+    const ok = await confirmDialog({
+      title: 'แก้ไขการตั้งค่า LINE',
+      message: 'การแก้ไขค่านี้อาจทำให้การแจ้งเตือนอัตโนมัติผ่าน LINE หยุดทำงานชั่วคราวจนกว่าจะตั้งค่าใหม่ถูกต้อง ยืนยันว่าต้องการแก้ไข?',
+      confirmLabel: 'แก้ไข',
+    });
+    if (ok) {
       setUnlocked(true);
       setError(null);
       setNotice(null);

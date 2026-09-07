@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import { MeetingMinute } from '@/lib/types';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 export default function MeetingMinuteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const confirmDialog = useConfirm();
   const router = useRouter();
   const [minute, setMinute] = useState<MeetingMinute | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,13 @@ export default function MeetingMinuteDetailPage({ params }: { params: Promise<{ 
   }, [id]);
 
   const handleDelete = async () => {
-    if (!minute || !confirm(`ลบบันทึกการประชุม "${minute.title || 'บันทึกการประชุม'}" ใช่หรือไม่?`)) return;
+    if (!minute) return;
+    const ok = await confirmDialog({
+      title: 'ลบบันทึกการประชุม',
+      message: `ลบบันทึกการประชุม "${minute.title || 'บันทึกการประชุม'}" ใช่หรือไม่?`,
+      confirmLabel: 'ลบบันทึก',
+    });
+    if (!ok) return;
     setDeleting(true);
     try {
       await api.delete(`/meeting-minutes/${id}`);

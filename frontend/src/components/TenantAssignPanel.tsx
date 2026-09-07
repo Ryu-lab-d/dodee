@@ -3,8 +3,10 @@
 import { useState, FormEvent } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { Room } from '@/lib/types';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSaved: () => void }) {
+  const confirmDialog = useConfirm();
   const activeTenant = room.tenants?.find((t) => t.status === 'เช่าอยู่');
   const [showForm, setShowForm] = useState(false);
   const [editingTenant, setEditingTenant] = useState(false);
@@ -78,7 +80,13 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
 
   const handleEndTenancy = async () => {
     if (!activeTenant) return;
-    if (!confirm(`สิ้นสุดสัญญาของ "${activeTenant.name}" และปล่อยห้องนี้ว่างใช่ไหม?`)) return;
+    const ok = await confirmDialog({
+      title: 'สิ้นสุดสัญญาผู้เช่า',
+      message: `สิ้นสุดสัญญาของ "${activeTenant.name}" และปล่อยห้องนี้ว่างใช่ไหม?`,
+      confirmLabel: 'สิ้นสุดสัญญา',
+      danger: false,
+    });
+    if (!ok) return;
     await api.put(`/tenants/${activeTenant.id}`, { status: 'หมดสัญญา' });
     onSaved();
   };

@@ -7,6 +7,7 @@ import { MeetingMinute, PropertyDetail, User } from '@/lib/types';
 import DetailsEditor from '@/components/DetailsEditor';
 import MeetingSuccessModal from '@/components/MeetingSuccessModal';
 import { SkeletonBlock } from '@/components/Skeleton';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -168,6 +169,7 @@ function CreateMeetingModal({
 
 export default function MeetingMinutesPage() {
   const { user } = useAuth();
+  const confirmDialog = useConfirm();
   const [minutes, setMinutes] = useState<MeetingMinute[]>([]);
   const [loading, setLoading] = useState(true);
   const [colleagues, setColleagues] = useState<User[]>([]);
@@ -196,7 +198,12 @@ export default function MeetingMinutesPage() {
 
   const handleDelete = async (minute: MeetingMinute, e: MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`ลบบันทึกการประชุม "${minute.title || 'บันทึกการประชุม'}" ใช่หรือไม่?`)) return;
+    const ok = await confirmDialog({
+      title: 'ลบบันทึกการประชุม',
+      message: `ลบบันทึกการประชุม "${minute.title || 'บันทึกการประชุม'}" ใช่หรือไม่?`,
+      confirmLabel: 'ลบบันทึก',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/meeting-minutes/${minute.id}`);
       load();

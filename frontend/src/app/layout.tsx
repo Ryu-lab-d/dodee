@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-thai",
@@ -21,7 +22,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="th" className={`${notoSansThai.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-sky-50 font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </AuthProvider>
       </body>
     </html>
   );

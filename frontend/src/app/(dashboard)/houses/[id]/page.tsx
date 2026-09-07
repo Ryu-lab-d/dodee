@@ -10,6 +10,7 @@ import ImageUploader from '@/components/ImageUploader';
 import DetailsEditor from '@/components/DetailsEditor';
 import TenantAssignPanel from '@/components/TenantAssignPanel';
 import LocationFields, { emptyLocation, LocationValue } from '@/components/LocationFields';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const STATUS_STYLE: Record<RoomStatus, string> = {
   ว่าง: 'bg-green-50 text-green-700',
@@ -20,6 +21,7 @@ const STATUS_STYLE: Record<RoomStatus, string> = {
 export default function HouseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const confirmDialog = useConfirm();
   const router = useRouter();
   const [house, setHouse] = useState<Property | null>(null);
   const [editing, setEditing] = useState(false);
@@ -88,13 +90,12 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleDelete = async () => {
     if (!house) return;
-    if (
-      !confirm(
-        `ลบ "${house.name}" ใช่ไหม? การลบจะลบผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของทรัพย์สินนี้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirmDialog({
+      title: `ลบ "${house.name}"`,
+      message: 'การลบจะลบผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของทรัพย์สินนี้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้',
+      confirmLabel: 'ลบ',
+    });
+    if (!ok) return;
     setError(null);
     try {
       await api.delete(`/properties/${id}`);

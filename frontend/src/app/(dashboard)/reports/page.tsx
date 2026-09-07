@@ -5,6 +5,7 @@ import { api, ApiError } from '@/lib/api';
 import { AppTransaction, FinancialSummary, Property, TransactionType } from '@/lib/types';
 import CountUp from '@/components/CountUp';
 import { SkeletonRows } from '@/components/Skeleton';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -32,6 +33,7 @@ function downloadCsv(rows: AppTransaction[], month: string) {
 }
 
 export default function ReportsPage() {
+  const confirmDialog = useConfirm();
   const [month, setMonth] = useState(thisMonth());
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertyId, setPropertyId] = useState('');
@@ -100,7 +102,8 @@ export default function ReportsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
+    const ok = await confirmDialog({ message: 'ลบรายการนี้ใช่ไหม?', confirmLabel: 'ลบรายการ' });
+    if (!ok) return;
     await api.delete(`/transactions/${id}`);
     load();
   };

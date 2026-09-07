@@ -10,6 +10,7 @@ import ImageUploader from '@/components/ImageUploader';
 import DetailsEditor from '@/components/DetailsEditor';
 import TenantAssignPanel from '@/components/TenantAssignPanel';
 import LocationFields, { emptyLocation, LocationValue } from '@/components/LocationFields';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const STATUS_STYLE: Record<RoomStatus, string> = {
   ว่าง: 'bg-green-50 text-green-700 ring-1 ring-green-200',
@@ -25,6 +26,7 @@ const CARD_RING: Record<RoomStatus, string> = {
 
 function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; canEdit: boolean; onSaved: () => void; onDeleted: () => void }) {
   const { user } = useAuth();
+  const confirmDialog = useConfirm();
   const [editing, setEditing] = useState(false);
   const [baseRentPrice, setBaseRentPrice] = useState(room.baseRentPrice);
   const [description, setDescription] = useState(room.description || '');
@@ -55,7 +57,12 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
   };
 
   const handleDelete = async () => {
-    if (!confirm(`ลบห้อง ${room.roomNumber} ใช่ไหม? ผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของห้องนี้จะถูกลบถาวรไปด้วย ย้อนกลับไม่ได้`)) return;
+    const ok = await confirmDialog({
+      title: `ลบห้อง ${room.roomNumber}`,
+      message: 'ผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของห้องนี้จะถูกลบถาวรไปด้วย ย้อนกลับไม่ได้',
+      confirmLabel: 'ลบห้อง',
+    });
+    if (!ok) return;
     try {
       await api.delete(`/rooms/${room.id}`);
       onDeleted();
@@ -237,6 +244,7 @@ function RoomDetailPanel({ room, canEdit, onSaved, onDeleted }: { room: Room; ca
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const confirmDialog = useConfirm();
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -307,13 +315,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   const handleDeleteProperty = async () => {
     if (!property) return;
-    if (
-      !confirm(
-        `ลบ "${property.name}" ใช่ไหม? การลบจะลบห้องทั้งหมด ผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของทรัพย์สินนี้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirmDialog({
+      title: `ลบ "${property.name}"`,
+      message: 'การลบจะลบห้องทั้งหมด ผู้เช่า ประวัติมิเตอร์ และใบแจ้งหนี้ของทรัพย์สินนี้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้',
+      confirmLabel: 'ลบทรัพย์สิน',
+    });
+    if (!ok) return;
     setPropertyError(null);
     try {
       await api.delete(`/properties/${id}`);

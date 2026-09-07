@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { Invoice, InvoiceStatus } from '@/lib/types';
 import { SkeletonRows } from '@/components/Skeleton';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -23,6 +24,7 @@ const STATUS_LABEL: Record<InvoiceStatus, string> = {
 };
 
 export default function InvoicesPage() {
+  const confirmDialog = useConfirm();
   const [month, setMonth] = useState(thisMonth());
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +100,12 @@ export default function InvoicesPage() {
   const handleUnmark = async (inv: Invoice) => {
     const paymentId = inv.payments?.[inv.payments.length - 1]?.id;
     if (!paymentId) return;
-    if (!confirm('ยกเลิกการชำระเงินนี้ใช่ไหม? ใบเรียกเก็บจะกลับไปเป็นสถานะค้างชำระ')) return;
+    const ok = await confirmDialog({
+      title: 'ยกเลิกการชำระเงิน',
+      message: 'ใบเรียกเก็บจะกลับไปเป็นสถานะค้างชำระ',
+      confirmLabel: 'ยกเลิกการชำระ',
+    });
+    if (!ok) return;
     setError(null);
     try {
       await api.delete(`/payments/${paymentId}`);
