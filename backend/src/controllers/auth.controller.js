@@ -63,13 +63,14 @@ const me = asyncHandler(async (req, res) => {
   res.json({ id, username, name, email, phone, avatarUrl, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion, permissions });
 });
 
-// Self-service, reachable even before today's attendance check-in (the pre-check-in gate
-// screen shows this photo, so a first-time user must be able to set it from there).
-const updateMyAvatar = asyncHandler(async (req, res) => {
-  const { avatarUrl } = req.body;
-  if (!avatarUrl) return res.status(400).json({ message: 'avatarUrl is required' });
-  await req.user.update({ avatarUrl });
-  res.status(200).json({ ok: true, avatarUrl });
+// Self-service profile update (name/phone/email/avatar) - reachable even before today's
+// attendance check-in, since the pre-check-in gate screen shows this info and a first-time
+// user must be able to set their own photo from there. Role/status/username stay owner-only
+// (via PUT /users/:id) - this endpoint can never touch those.
+const updateMyProfile = asyncHandler(async (req, res) => {
+  const { name, phone, email, avatarUrl } = req.body;
+  await req.user.update({ name, phone, email, avatarUrl });
+  res.status(200).json({ id: req.user.id, name: req.user.name, phone: req.user.phone, email: req.user.email, avatarUrl: req.user.avatarUrl });
 });
 
 const getTerms = asyncHandler(async (req, res) => {
@@ -107,4 +108,4 @@ const changePassword = asyncHandler(async (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-module.exports = { login, register, me, updateMyAvatar, changePassword, getTerms, acceptTerms };
+module.exports = { login, register, me, updateMyProfile, changePassword, getTerms, acceptTerms };

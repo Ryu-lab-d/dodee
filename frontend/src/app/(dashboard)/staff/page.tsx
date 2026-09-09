@@ -4,9 +4,10 @@ import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { api, ApiError, fileUrl } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { User, Property, Role, UserStatus } from '@/lib/types';
 import { SkeletonRows } from '@/components/Skeleton';
+import AvatarPicker from '@/components/AvatarPicker';
 
 const ROLE_LABEL: Record<Role, string> = {
   owner: 'เจ้าของ',
@@ -117,23 +118,8 @@ function EditStaffModal({
   const [phone, setPhone] = useState(staffUser.phone || '');
   const [email, setEmail] = useState(staffUser.email || '');
   const [avatarUrl, setAvatarUrl] = useState(staffUser.avatarUrl || '');
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleAvatarFile = async (files: FileList | null) => {
-    const file = files?.[0];
-    if (!file) return;
-    setUploadingAvatar(true);
-    try {
-      const { url } = await api.upload(file);
-      setAvatarUrl(url);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'อัปโหลดรูปไม่สำเร็จ');
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -156,18 +142,7 @@ function EditStaffModal({
         <h3 className="mb-4 text-sm font-semibold text-slate-900">แก้ไขข้อมูล {staffUser.name}</h3>
         {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
         <div className="mb-4 flex justify-center">
-          <label className="group relative h-20 w-20 cursor-pointer overflow-hidden rounded-full border-2 border-slate-100 bg-slate-50">
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={fileUrl(avatarUrl)} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">รูปภาพ</div>
-            )}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {uploadingAvatar ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูป'}
-            </div>
-            <input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => handleAvatarFile(e.target.files)} />
-          </label>
+          <AvatarPicker avatarUrl={avatarUrl} onUploaded={setAvatarUrl} size={80} />
         </div>
         <div className="space-y-3">
           <div>

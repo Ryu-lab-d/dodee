@@ -30,16 +30,24 @@ const status = asyncHandler(async (req, res) => {
   const now = new Date();
   const record = req.user.role === 'owner' ? null : await getTodayRecord(req.user.id, now);
   const checkedIn = !!record?.checkInAt && !record?.checkOutAt;
+  const beforeWindow = isBeforeCheckInWindow(now);
+  const afterWorkEnd = isPastWorkEnd(now);
+  const checkedOutToday = !!record?.checkOutAt;
 
   res.json({
     now: now.toISOString(),
     workStart: formatHHMM(WORK_START_MIN),
     lateAfter: formatHHMM(LATE_AFTER_MIN),
     workEnd: formatHHMM(WORK_END_MIN),
-    beforeWindow: isBeforeCheckInWindow(now),
+    beforeWindow,
+    afterWorkEnd,
     hasAccess: req.user.role === 'owner' || checkedIn,
     checkedIn,
-    checkedOutToday: !!record?.checkOutAt,
+    checkedOutToday,
+    // Only these conditions get the simple one-click "check in, maybe late" button -
+    // anything outside the normal 08:00-17:00 workday (too early, past end of day, or
+    // already checked out once today) has to go through the off-hours access flow instead.
+    checkInAvailable: !checkedIn && !checkedOutToday && !beforeWindow && !afterWorkEnd,
     record: publicRecord(record),
   });
 });
@@ -48,6 +56,11 @@ const checkIn = asyncHandler(async (req, res) => {
   const now = new Date();
   if (isBeforeCheckInWindow(now)) {
     return res.status(400).json({ message: `ยังไม่ถึงเวลาเช็คชื่อเข้างาน (เปิดเวลา ${formatHHMM(WORK_START_MIN)} น.)` });
+  }
+  if (isPastWorkEnd(now)) {
+    return res
+      .status(400)
+      .json({ message: `เลยเวลาทำการปกติแล้ว (${formatHHMM(WORK_END_MIN)} น.) กรุณาใช้ระบบขอเข้าถึงข้อมูลนอกเวลาแทน` });
   }
 
   const existing = await getTodayRecord(req.user.id, now);

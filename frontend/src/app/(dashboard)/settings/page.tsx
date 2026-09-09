@@ -4,6 +4,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useAuth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import ImageUploader from '@/components/ImageUploader';
+import AvatarPicker from '@/components/AvatarPicker';
 import { useConfirm } from '@/components/ConfirmDialog';
 
 interface LineSettingsResponse {
@@ -12,6 +13,86 @@ interface LineSettingsResponse {
   channelSecretConfigured: boolean;
   channelSecretPreview: string | null;
   locked: boolean;
+}
+
+function MyProfileSettings() {
+  const { user, refreshUser } = useAuth();
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const handleSave = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    setSaving(true);
+    try {
+      await api.put('/auth/me/profile', { name, phone: phone || null, email: email || null });
+      await refreshUser();
+      setNotice('บันทึกข้อมูลส่วนตัวสำเร็จ');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+      <h2 className="mb-4 text-sm font-semibold text-slate-900">ข้อมูลส่วนตัว</h2>
+
+      {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+      {notice && <div className="mb-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</div>}
+
+      <div className="mb-4 flex justify-center">
+        <AvatarPicker
+          avatarUrl={user?.avatarUrl}
+          onUploaded={async (url) => {
+            await api.put('/auth/me/profile', { avatarUrl: url });
+            await refreshUser();
+          }}
+        />
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">ชื่อ-นามสกุล</label>
+          <input
+            required
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">เบอร์โทร</label>
+          <input
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">อีเมล</label>
+          <input
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูลส่วนตัว'}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 function MyLineConnection() {
@@ -435,6 +516,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-xl font-semibold text-slate-900">ตั้งค่า</h1>
+      <MyProfileSettings />
       {user?.role === 'owner' && <CompanyProfileSettings />}
       <MyLineConnection />
       <ChangePasswordForm />

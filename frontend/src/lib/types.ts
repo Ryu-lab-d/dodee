@@ -46,9 +46,11 @@ export interface AttendanceStatus {
   lateAfter: string;
   workEnd: string;
   beforeWindow: boolean;
+  afterWorkEnd: boolean;
   hasAccess: boolean;
   checkedIn: boolean;
   checkedOutToday: boolean;
+  checkInAvailable: boolean;
   record: AttendanceRecord | null;
 }
 
