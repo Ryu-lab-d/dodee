@@ -3,7 +3,7 @@ const { User, Property, UserProperty } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
 
-const SAFE_ATTRS = ['id', 'username', 'name', 'email', 'phone', 'role', 'status', 'lineUserId', 'createdAt'];
+const SAFE_ATTRS = ['id', 'username', 'name', 'email', 'phone', 'avatarUrl', 'role', 'status', 'lineUserId', 'createdAt'];
 
 const list = asyncHandler(async (req, res) => {
   const users = await User.findAll({
@@ -28,10 +28,10 @@ const update = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.params.id);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  const { name, phone, email, role, status } = req.body;
-  await user.update({ name, phone, email, role, status });
+  const { name, phone, email, avatarUrl, role, status } = req.body;
+  await user.update({ name, phone, email, avatarUrl, role, status });
   logActivity(req.user, 'update_user', `แก้ไขบัญชี "${user.name}" (บทบาท: ${user.role}, สถานะ: ${user.status})`);
-  res.json({ id: user.id, name: user.name, phone: user.phone, email: user.email, role: user.role, status: user.status });
+  res.json({ id: user.id, name: user.name, phone: user.phone, email: user.email, avatarUrl: user.avatarUrl, role: user.role, status: user.status });
 });
 
 const assignProperties = asyncHandler(async (req, res) => {

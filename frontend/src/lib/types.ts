@@ -18,6 +18,7 @@ export interface User {
   status?: UserStatus;
   email?: string;
   phone?: string;
+  avatarUrl?: string | null;
   lineUserId?: string | null;
   lineLinkCode?: string | null;
   termsAcceptedAt?: string | null;
@@ -25,6 +26,38 @@ export interface User {
   assignedProperties?: Array<{ id: string; name: string }>;
   permissions?: Partial<Record<PermissionKey, boolean>>;
   createdAt?: string;
+}
+
+export type CheckInMethod = 'normal' | 'override';
+
+export interface AttendanceRecord {
+  date: string;
+  checkInAt: string | null;
+  checkInLateMinutes: number | null;
+  checkInMethod: CheckInMethod | null;
+  checkOutAt: string | null;
+  checkOutEarly: boolean;
+  checkOutEarlyMinutes: number | null;
+}
+
+export interface AttendanceStatus {
+  now: string;
+  workStart: string;
+  lateAfter: string;
+  workEnd: string;
+  beforeWindow: boolean;
+  hasAccess: boolean;
+  checkedIn: boolean;
+  checkedOutToday: boolean;
+  record: AttendanceRecord | null;
+}
+
+export interface AttendanceReportRow extends AttendanceRecord {
+  userId: string;
+  name: string;
+  username: string;
+  role: Role;
+  status: UserStatus;
 }
 
 export type PropertyType = 'หอพัก' | 'บ้าน' | 'คอนโด';

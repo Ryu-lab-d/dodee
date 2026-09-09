@@ -13,6 +13,7 @@ const Setting = require('./setting.model');
 const MeetingMinute = require('./meetingMinute.model');
 const ActivityLog = require('./activityLog.model');
 const RolePermission = require('./rolePermission.model');
+const Attendance = require('./attendance.model');
 
 // Property <-> Room
 Property.hasMany(Room, { foreignKey: 'propertyId', as: 'rooms', onDelete: 'CASCADE' });
@@ -54,6 +55,10 @@ Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(MeetingMinute, { foreignKey: 'recordedByUserId', as: 'meetingMinutes' });
 MeetingMinute.belongsTo(User, { foreignKey: 'recordedByUserId', as: 'recordedByUser' });
 
+// User <-> Attendance (daily check-in/check-out record)
+User.hasMany(Attendance, { foreignKey: 'userId', as: 'attendances', onDelete: 'CASCADE' });
+Attendance.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 module.exports = {
   sequelize,
   User,
@@ -70,4 +75,5 @@ module.exports = {
   MeetingMinute,
   ActivityLog,
   RolePermission,
+  Attendance,
 };

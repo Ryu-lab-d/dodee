@@ -55,12 +55,21 @@ const register = asyncHandler(async (req, res) => {
 });
 
 const me = asyncHandler(async (req, res) => {
-  const { id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion } = req.user;
+  const { id, username, name, email, phone, avatarUrl, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion } = req.user;
   const permissions =
     role === 'owner'
       ? Object.fromEntries([...VALID_PERMISSION_KEYS].map((k) => [k, true]))
       : (await loadMatrix())[role] || {};
-  res.json({ id, username, name, email, phone, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion, permissions });
+  res.json({ id, username, name, email, phone, avatarUrl, role, status, lineUserId, lineLinkCode, termsAcceptedAt, termsVersion, permissions });
+});
+
+// Self-service, reachable even before today's attendance check-in (the pre-check-in gate
+// screen shows this photo, so a first-time user must be able to set it from there).
+const updateMyAvatar = asyncHandler(async (req, res) => {
+  const { avatarUrl } = req.body;
+  if (!avatarUrl) return res.status(400).json({ message: 'avatarUrl is required' });
+  await req.user.update({ avatarUrl });
+  res.status(200).json({ ok: true, avatarUrl });
 });
 
 const getTerms = asyncHandler(async (req, res) => {
@@ -98,4 +107,4 @@ const changePassword = asyncHandler(async (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-module.exports = { login, register, me, changePassword, getTerms, acceptTerms };
+module.exports = { login, register, me, updateMyAvatar, changePassword, getTerms, acceptTerms };

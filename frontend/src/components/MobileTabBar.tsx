@@ -17,6 +17,7 @@ import {
   CalendarDays,
   UserCog,
   ShieldCheck,
+  ClipboardCheck,
   Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -37,6 +38,7 @@ const MORE_ITEMS: Array<{ href: string; label: string; icon: LucideIcon; ownerOn
   { href: '/calendar', label: 'ปฏิทิน', icon: CalendarDays },
   { href: '/staff', label: 'พนักงาน', icon: UserCog, ownerOnly: true },
   { href: '/permissions', label: 'สิทธิ์การใช้งาน', icon: ShieldCheck, ownerOnly: true },
+  { href: '/attendance-report', label: 'เวลาทำงาน', icon: ClipboardCheck, ownerOnly: true },
   { href: '/settings', label: 'ตั้งค่า', icon: Settings },
 ];
 
