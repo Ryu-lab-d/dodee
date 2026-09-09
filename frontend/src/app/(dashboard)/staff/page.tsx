@@ -8,6 +8,7 @@ import { api, ApiError } from '@/lib/api';
 import { User, Property, Role, UserStatus } from '@/lib/types';
 import { SkeletonRows } from '@/components/Skeleton';
 import AvatarPicker from '@/components/AvatarPicker';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const ROLE_LABEL: Record<Role, string> = {
   owner: 'เจ้าของ',
@@ -249,6 +250,7 @@ function AssignPropertiesModal({
 
 export default function StaffPage() {
   const { user } = useAuth();
+  const confirmDialog = useConfirm();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -315,6 +317,21 @@ export default function StaffPage() {
   const changeRole = async (staffUser: User, nextRole: Role) => {
     await api.put(`/users/${staffUser.id}`, { role: nextRole });
     load();
+  };
+
+  const handleDeleteStaff = async (staffUser: User) => {
+    const ok = await confirmDialog({
+      title: `ลบ "${staffUser.name}"`,
+      message: 'บัญชีนี้จะถูกลบถาวรและเข้าสู่ระบบไม่ได้อีก ย้อนกลับไม่ได้ (หากต้องการเก็บประวัติไว้ ให้ใช้ "ระงับการใช้งาน" แทน)',
+      confirmLabel: 'ลบบัญชี',
+    });
+    if (!ok) return;
+    try {
+      await api.delete(`/users/${staffUser.id}`);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ');
+    }
   };
 
   if (user && user.role !== 'owner') return null;
@@ -470,6 +487,11 @@ export default function StaffPage() {
                         <button type="button" onClick={() => toggleStatus(u)} className="text-xs font-medium text-slate-500 hover:text-red-600">
                           {u.status === 'active' ? 'ระงับการใช้งาน' : 'เปิดใช้งาน'}
                         </button>
+                        {u.role !== 'owner' && (
+                          <button type="button" onClick={() => handleDeleteStaff(u)} className="text-xs font-medium text-red-500 hover:text-red-600">
+                            ลบ
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

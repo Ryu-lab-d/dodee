@@ -8,6 +8,7 @@ router.use(authenticate);
 router.get('/', authorize('owner'), ctrl.list);
 router.get('/colleagues', ctrl.colleagues);
 router.put('/:id', authorize('owner'), ctrl.update);
+router.delete('/:id', authorize('owner'), ctrl.remove);
 router.put('/:id/assign-properties', authorize('owner'), ctrl.assignProperties);
 
 router.post('/me/line-link-code', ctrl.generateLineLinkCode);

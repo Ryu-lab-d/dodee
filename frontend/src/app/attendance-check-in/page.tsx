@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useAttendance } from '@/lib/attendance';
 import { api, ApiError } from '@/lib/api';
 import { AttendanceRecord } from '@/lib/types';
 import AvatarPicker from '@/components/AvatarPicker';
+import ChangePasswordForm from '@/components/ChangePasswordForm';
 import AutoDismissSuccess from '@/components/AutoDismissSuccess';
 import LoadingScreen from '@/components/LoadingScreen';
 
@@ -25,6 +27,74 @@ const formatThaiTime = (d: Date) =>
 const formatThaiDate = (d: Date) =>
   d.toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+function ProfileEditForm() {
+  const { user, refreshUser } = useAuth();
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const handleSave = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    setSaving(true);
+    try {
+      await api.put('/auth/me/profile', { name, phone: phone || null, email: email || null });
+      await refreshUser();
+      setNotice('บันทึกข้อมูลสำเร็จ');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white p-5 text-left shadow-sm">
+      <h2 className="mb-4 text-sm font-semibold text-slate-900">ข้อมูลส่วนตัว</h2>
+      {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+      {notice && <div className="mb-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</div>}
+      <form onSubmit={handleSave} className="space-y-3">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">ชื่อ-นามสกุล</label>
+          <input
+            required
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">เบอร์โทร</label>
+          <input
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">อีเมล</label>
+          <input
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function AttendanceCheckInPage() {
   const { user, loading, refreshUser } = useAuth();
   const { status, loading: attendanceLoading, refresh } = useAttendance();
@@ -33,6 +103,7 @@ export default function AttendanceCheckInPage() {
   const [checkingIn, setCheckingIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successRecord, setSuccessRecord] = useState<AttendanceRecord | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (loading || attendanceLoading) return;
@@ -150,6 +221,22 @@ export default function AttendanceCheckInPage() {
             </>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setShowSettings((v) => !v)}
+          className="mt-4 flex w-full items-center justify-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700"
+        >
+          ตั้งค่าบัญชี
+          <ChevronDown className={`h-4 w-4 transition-transform ${showSettings ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showSettings && (
+          <div className="fade-up mt-3 space-y-3">
+            <ProfileEditForm />
+            <ChangePasswordForm />
+          </div>
+        )}
       </div>
 
       {successRecord && (
