@@ -61,12 +61,22 @@ export default function AttendanceReportPage() {
           <h1 className="text-xl font-semibold text-slate-900">เวลาทำงาน</h1>
           <p className="text-sm text-slate-500">ดูว่าใครเช็คชื่อเข้างานตรงเวลา ใครสาย และใครเข้าถึงข้อมูลนอกเวลา ในแต่ละวัน</p>
         </div>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 print:hidden"
+          />
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 print:hidden"
+          >
+            พิมพ์ / PDF
+          </button>
+          <p className="hidden text-sm text-slate-500 print:block">วันที่ {date}</p>
+        </div>
       </div>
 
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { AppTransaction, FinancialSummary, Property, TransactionType } from '@/lib/types';
 import CountUp from '@/components/CountUp';
@@ -124,6 +125,12 @@ export default function ReportsPage() {
           >
             Export CSV
           </button>
+          <Link
+            href={`/reports/print?month=${month}${propertyId ? `&propertyId=${propertyId}` : ''}`}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            พิมพ์ / PDF
+          </Link>
           <button type="button"
             onClick={() => setShowForm((v) => !v)}
             className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
