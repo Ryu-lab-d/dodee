@@ -1,4 +1,4 @@
-const { Tenant, Room } = require('../models');
+const { Tenant, Room, Property } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
 const { getAccessiblePropertyIds, canAccessProperty } = require('../utils/scope');
@@ -29,7 +29,9 @@ const list = asyncHandler(async (req, res) => {
 });
 
 const getOne = asyncHandler(async (req, res) => {
-  const tenant = await Tenant.findByPk(req.params.id, { include: [{ model: Room, as: 'room' }] });
+  const tenant = await Tenant.findByPk(req.params.id, {
+    include: [{ model: Room, as: 'room', include: [{ model: Property, as: 'property' }] }],
+  });
   if (!tenant || !(await canAccessProperty(req.user, tenant.room?.propertyId))) {
     return res.status(404).json({ message: 'Tenant not found' });
   }
@@ -63,12 +65,17 @@ const update = asyncHandler(async (req, res) => {
   }
 
   const before = tenant.toJSON();
-  const { name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status } = req.body;
-  await tenant.update({ name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status });
+  const { name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status, contractText } = req.body;
+  await tenant.update({ name, phone, email, idCard, moveInDate, contractEndDate, depositAmount, status, contractText });
 
   const changes = describeChanges(before, tenant.toJSON(), TENANT_FIELD_LABELS);
   if (changes.length) {
     logActivity(req.user, 'update_tenant', `แก้ไขผู้เช่า "${tenant.name}": ${changes.join(', ')}`);
+  }
+  // Contract text is long free-form content - logged as its own event rather than folded
+  // into the field-by-field diff above (which would be unreadably noisy for a full document).
+  if (contractText !== undefined && contractText !== before.contractText) {
+    logActivity(req.user, 'update_tenant_contract', `แก้ไขสัญญาเช่าของผู้เช่า "${tenant.name}"`);
   }
 
   if (status === 'หมดสัญญา' || status === 'ยกเลิก') {

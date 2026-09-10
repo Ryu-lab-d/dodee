@@ -11,6 +11,7 @@ const Tenant = sequelize.define('Tenant', {
   moveInDate: { type: DataTypes.DATEONLY },
   contractEndDate: { type: DataTypes.DATEONLY },
   depositAmount: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
+  contractText: { type: DataTypes.TEXT }, // editable lease-agreement text, generated from a template and then customizable
   status: {
     type: DataTypes.ENUM('เช่าอยู่', 'หมดสัญญา', 'ยกเลิก'),
     allowNull: false,

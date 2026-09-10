@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { Room } from '@/lib/types';
 import { useConfirm } from '@/components/ConfirmDialog';
@@ -12,6 +13,7 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
   const [editingTenant, setEditingTenant] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [idCard, setIdCard] = useState('');
   const [moveInDate, setMoveInDate] = useState('');
   const [contractEndDate, setContractEndDate] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
@@ -22,6 +24,7 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
     if (!activeTenant) return;
     setName(activeTenant.name);
     setPhone(activeTenant.phone || '');
+    setIdCard(activeTenant.idCard || '');
     setMoveInDate(activeTenant.moveInDate || '');
     setContractEndDate(activeTenant.contractEndDate || '');
     setDepositAmount(activeTenant.depositAmount || '');
@@ -38,6 +41,7 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
         roomId: room.id,
         name,
         phone,
+        idCard: idCard || undefined,
         moveInDate: moveInDate || undefined,
         contractEndDate: contractEndDate || undefined,
         depositAmount: depositAmount ? Number(depositAmount) : undefined,
@@ -45,6 +49,7 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
       setShowForm(false);
       setName('');
       setPhone('');
+      setIdCard('');
       setMoveInDate('');
       setContractEndDate('');
       setDepositAmount('');
@@ -65,6 +70,7 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
       await api.put(`/tenants/${activeTenant.id}`, {
         name,
         phone,
+        idCard: idCard || undefined,
         moveInDate: moveInDate || undefined,
         contractEndDate: contractEndDate || undefined,
         depositAmount: depositAmount ? Number(depositAmount) : undefined,
@@ -108,6 +114,12 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+          />
+          <input
+            placeholder="เลขบัตรประชาชน"
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={idCard}
+            onChange={(e) => setIdCard(e.target.value)}
           />
           <div>
             <label className="mb-1 block text-xs text-slate-500">วันที่เข้าอยู่</label>
@@ -177,6 +189,12 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
           >
             สิ้นสุดสัญญา / ย้ายออก
           </button>
+          <Link
+            href={`/tenants/${activeTenant.id}/contract`}
+            className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+          >
+            สัญญาเช่า
+          </Link>
         </div>
       </div>
     );
@@ -209,6 +227,12 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
           className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+        />
+        <input
+          placeholder="เลขบัตรประชาชน"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          value={idCard}
+          onChange={(e) => setIdCard(e.target.value)}
         />
         <div>
           <label className="mb-1 block text-xs text-slate-500">วันที่เข้าอยู่</label>

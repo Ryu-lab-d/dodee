@@ -104,7 +104,7 @@ export interface Room {
   description?: string;
   details: PropertyDetail[];
   images: string[];
-  property?: { id: string; name: string };
+  property?: { id: string; name: string; type?: PropertyType };
   tenants?: Tenant[];
 }
 
@@ -121,6 +121,7 @@ export interface Tenant {
   contractEndDate?: string;
   depositAmount: string;
   status: TenantStatus;
+  contractText?: string | null;
   room?: Room;
 }
 
