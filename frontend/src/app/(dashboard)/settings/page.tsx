@@ -439,6 +439,50 @@ function CompanyProfileSettings() {
   );
 }
 
+function BackupSettings() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleExport = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await api.get('/backup/export');
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dodee-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'สำรองข้อมูลไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+      <h2 className="mb-1 text-sm font-semibold text-slate-900">สำรองข้อมูล</h2>
+      <p className="mb-4 text-sm text-slate-500">
+        ดาวน์โหลดข้อมูลทั้งหมดในระบบ (ทรัพย์สิน ห้อง ผู้เช่า มิเตอร์ บิล การชำระเงิน รายรับ-รายจ่าย บันทึกการประชุม พนักงาน) เป็นไฟล์เดียว
+        เก็บไว้เป็นข้อมูลสำรอง
+      </p>
+      {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+      <button
+        type="button"
+        onClick={handleExport}
+        disabled={loading}
+        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+      >
+        {loading ? 'กำลังเตรียมไฟล์...' : 'ดาวน์โหลดข้อมูลสำรองทั้งหมด'}
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
 
@@ -450,6 +494,7 @@ export default function SettingsPage() {
       <MyLineConnection />
       <ChangePasswordForm />
       {user?.role === 'owner' && <LineOaSettings />}
+      {user?.role === 'owner' && <BackupSettings />}
     </div>
   );
 }

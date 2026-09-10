@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/api';
 import { Invoice, InvoiceStatus } from '@/lib/types';
 import { SkeletonRows } from '@/components/Skeleton';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { downloadCsv } from '@/lib/csv';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -115,6 +116,25 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleExportCsv = () => {
+    downloadCsv(
+      `dodee-invoices-${month}.csv`,
+      ['ห้อง', 'ทรัพย์สิน', 'งวด', 'ค่าเช่า', 'ค่าน้ำ', 'ค่าไฟ', 'อื่นๆ', 'รวม', 'สถานะ', 'ครบกำหนด'],
+      invoices.map((inv) => [
+        inv.room?.roomNumber,
+        inv.room?.property?.name,
+        inv.billingMonth,
+        inv.baseRent,
+        inv.waterCharge,
+        inv.electricityCharge,
+        inv.otherCharges,
+        inv.totalAmount,
+        STATUS_LABEL[inv.status],
+        inv.dueDate,
+      ])
+    );
+  };
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -126,6 +146,13 @@ export default function InvoicesPage() {
             onChange={(e) => setMonth(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
+          <button type="button"
+            onClick={handleExportCsv}
+            disabled={invoices.length === 0}
+            className="rounded-lg border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+          >
+            ส่งออก CSV
+          </button>
           <button type="button"
             onClick={handleGenerate}
             disabled={generating}

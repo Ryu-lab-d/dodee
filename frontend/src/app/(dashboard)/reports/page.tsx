@@ -6,30 +6,19 @@ import { AppTransaction, FinancialSummary, Property, TransactionType } from '@/l
 import CountUp from '@/components/CountUp';
 import { SkeletonRows } from '@/components/Skeleton';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { downloadCsv } from '@/lib/csv';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
 const EXPENSE_CATEGORIES = ['ซ่อมบำรุง', 'ค่าน้ำ', 'ค่าไฟ', 'เงินเดือน', 'ภาษี', 'อื่นๆ'];
 const INCOME_CATEGORIES = ['rent', 'อื่นๆ'];
 
-function downloadCsv(rows: AppTransaction[], month: string) {
-  const header = ['วันที่', 'ประเภท', 'หมวดหมู่', 'ทรัพย์สิน', 'จำนวนเงิน', 'รายละเอียด'];
-  const lines = rows.map((t) => [
-    t.date,
-    t.type === 'income' ? 'รายรับ' : 'รายจ่าย',
-    t.category,
-    t.property?.name || '',
-    t.amount,
-    (t.description || '').replace(/,/g, ' '),
-  ]);
-  const csv = [header, ...lines].map((r) => r.join(',')).join('\n');
-  const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `dodee-transactions-${month}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+function exportTransactionsCsv(rows: AppTransaction[], month: string) {
+  downloadCsv(
+    `dodee-transactions-${month}.csv`,
+    ['วันที่', 'ประเภท', 'หมวดหมู่', 'ทรัพย์สิน', 'จำนวนเงิน', 'รายละเอียด'],
+    rows.map((t) => [t.date, t.type === 'income' ? 'รายรับ' : 'รายจ่าย', t.category, t.property?.name || '', t.amount, t.description || ''])
+  );
 }
 
 export default function ReportsPage() {
@@ -130,7 +119,7 @@ export default function ReportsPage() {
             ))}
           </select>
           <button type="button"
-            onClick={() => downloadCsv(transactions, month)}
+            onClick={() => exportTransactionsCsv(transactions, month)}
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             Export CSV

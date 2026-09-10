@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import { Tenant, Room } from '@/lib/types';
 import { SkeletonRows } from '@/components/Skeleton';
+import { downloadCsv } from '@/lib/csv';
 
 export default function TenantsPage() {
   const { user } = useAuth();
@@ -36,6 +37,14 @@ export default function TenantsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleExportCsv = () => {
+    downloadCsv(
+      `dodee-tenants-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['ชื่อ', 'ห้อง', 'เบอร์โทร', 'วันเข้าอยู่', 'วันหมดสัญญา', 'เงินมัดจำ', 'สถานะ'],
+      tenants.map((t) => [t.name, t.room?.roomNumber, t.phone, t.moveInDate, t.contractEndDate, t.depositAmount, t.status])
+    );
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -69,14 +78,23 @@ export default function TenantsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">ผู้เช่า</h1>
-        {(user?.role === 'owner' || !!user?.permissions?.tenantManage) && (
+        <div className="flex shrink-0 gap-2">
           <button type="button"
-            onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            onClick={handleExportCsv}
+            disabled={tenants.length === 0}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
           >
-            {showForm ? 'ยกเลิก' : '+ เพิ่มผู้เช่า'}
+            ส่งออก CSV
           </button>
-        )}
+          {(user?.role === 'owner' || !!user?.permissions?.tenantManage) && (
+            <button type="button"
+              onClick={() => setShowForm((v) => !v)}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              {showForm ? 'ยกเลิก' : '+ เพิ่มผู้เช่า'}
+            </button>
+          )}
+        </div>
       </div>
 
       {showForm && (

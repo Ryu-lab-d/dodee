@@ -10,6 +10,7 @@ import ImageUploader from '@/components/ImageUploader';
 import DetailsEditor from '@/components/DetailsEditor';
 import LocationFields, { emptyLocation, LocationValue } from '@/components/LocationFields';
 import { SkeletonCards } from '@/components/Skeleton';
+import { downloadCsv } from '@/lib/csv';
 
 export default function PropertiesPage() {
   const { user } = useAuth();
@@ -35,6 +36,14 @@ export default function PropertiesPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleExportCsv = () => {
+    downloadCsv(
+      `dodee-properties-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['ชื่อ', 'ที่อยู่', 'ตำบล', 'อำเภอ', 'จังหวัด', 'จำนวนห้อง', 'ค่าน้ำ/หน่วย', 'ค่าไฟ/หน่วย'],
+      properties.map((p) => [p.name, p.address, p.subdistrict, p.district, p.province, p.totalRooms, p.waterRate, p.electricityRate])
+    );
+  };
 
   const resetForm = () => {
     setName('');
@@ -74,14 +83,23 @@ export default function PropertiesPage() {
           <h1 className="text-xl font-semibold text-slate-900">หอพัก</h1>
           <p className="text-sm text-slate-500">ทรัพย์สินแบบหลายห้อง มีการจัดการห้อง/ผู้เช่าแยกรายห้อง</p>
         </div>
-        {user?.role === 'owner' && (
+        <div className="flex shrink-0 gap-2">
           <button type="button"
-            onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            onClick={handleExportCsv}
+            disabled={properties.length === 0}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
           >
-            {showForm ? 'ยกเลิก' : '+ เพิ่มหอพัก'}
+            ส่งออก CSV
           </button>
-        )}
+          {user?.role === 'owner' && (
+            <button type="button"
+              onClick={() => setShowForm((v) => !v)}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              {showForm ? 'ยกเลิก' : '+ เพิ่มหอพัก'}
+            </button>
+          )}
+        </div>
       </div>
 
       {showForm && (
