@@ -70,10 +70,16 @@ export default function RadioWidget() {
             type="button"
             onPointerDown={(e) => {
               e.preventDefault();
+              // Capture the pointer so a finger/cursor drifting off the button mid-press
+              // (very easy to do on a small hold-to-talk button) doesn't fire a "leave" and
+              // cut the transmission short - only an actual release ends it now.
+              e.currentTarget.setPointerCapture(e.pointerId);
               startTalking();
             }}
-            onPointerUp={stopTalking}
-            onPointerLeave={stopTalking}
+            onPointerUp={(e) => {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+              stopTalking();
+            }}
             onPointerCancel={stopTalking}
             disabled={!connected}
             className={`flex w-full touch-none select-none items-center justify-center gap-2 rounded-xl py-4 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:bg-slate-300 ${

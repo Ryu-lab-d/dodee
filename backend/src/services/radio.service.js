@@ -72,13 +72,14 @@ const attachRadio = (httpServer) => {
       io.emit('talk:start', { userId: socket.user.id, name: socket.user.name });
     });
 
-    socket.on('talk:audio', (data) => {
+    socket.on('talk:audio', (payload) => {
       if (!currentSpeaker || currentSpeaker.socketId !== socket.id) return;
       socket.broadcast.emit('talk:audio', {
         userId: socket.user.id,
         name: socket.user.name,
         avatarUrl: socket.user.avatarUrl,
-        data,
+        data: payload?.data,
+        mimeType: payload?.mimeType,
       });
     });
 
