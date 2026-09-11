@@ -221,7 +221,10 @@ export interface DashboardSummary {
   totalProperties: number;
   activeTenants: number;
   monthIncome: number;
+  monthExpense: number;
+  profit: number;
   overdueInvoices: number;
+  pendingMeterReadings: number;
   roomStatus: { total: number; occupied: number; vacant: number; maintenance: number };
   recentTransactions: Array<{
     id: string;
@@ -230,5 +233,14 @@ export interface DashboardSummary {
     amount: string;
     date: string;
     description?: string;
+  }>;
+  trend: Array<{ month: string; income: number; expense: number }>;
+  upcomingContracts: Array<{ id: string; tenantName: string; contractEndDate: string; roomLabel: string }>;
+  upcomingInvoices: Array<{
+    id: string;
+    dueDate: string;
+    totalAmount: string;
+    status: InvoiceStatus;
+    roomLabel: string;
   }>;
 }
