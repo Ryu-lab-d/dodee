@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
   LogIn,
+  Radio,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -39,6 +40,7 @@ const NAV_ITEMS: Array<{ href: string; label: string; icon: LucideIcon; ownerOnl
   { href: '/reports', label: 'รายรับ-รายจ่าย', icon: Wallet },
   { href: '/meeting-minutes', label: 'บันทึกการประชุม', icon: NotebookPen },
   { href: '/calendar', label: 'ปฏิทิน', icon: CalendarDays },
+  { href: '/radio', label: 'วิทยุ', icon: Radio },
   { href: '/staff', label: 'พนักงาน', icon: UserCog, ownerOnly: true },
   { href: '/permissions', label: 'สิทธิ์การใช้งาน', icon: ShieldCheck, ownerOnly: true },
   { href: '/attendance-report', label: 'เวลาทำงาน', icon: ClipboardCheck, ownerOnly: true },

@@ -55,8 +55,10 @@ const pickMimeType = () => {
 
 // A held transmission is split into short, independently-decodable clips sent as they're
 // recorded (instead of one clip buffered for the whole hold) so the other side starts
-// hearing it within ~1s instead of only after the talker releases the button.
-const SEGMENT_MS = 1200;
+// hearing it almost immediately instead of only after the talker releases the button.
+// Shorter segments cut first-audio latency further but add per-clip container overhead -
+// 400ms is close to the floor where MediaRecorder segment restarts stay reliable.
+const SEGMENT_MS = 400;
 
 const RadioContext = createContext<RadioContextValue | undefined>(undefined);
 

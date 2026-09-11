@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <MobileTabBar />
-        <RadioWidget />
+        {pathname !== '/radio' && <RadioWidget />}
       </div>
     </RadioProvider>
   );
