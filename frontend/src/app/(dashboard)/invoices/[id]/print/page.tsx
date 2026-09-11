@@ -4,12 +4,15 @@ import { use, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { api, fileUrl } from '@/lib/api';
 import { Invoice } from '@/lib/types';
+import PromptPayQR from '@/components/PromptPayQR';
+import { isValidPromptPayId } from '@/lib/promptpay';
 
 interface CompanyProfile {
   name: string;
   address: string;
   phone: string;
   logoUrl: string;
+  promptpayId?: string;
 }
 
 export default function InvoicePrintPage({ params }: { params: Promise<{ id: string }> }) {
@@ -115,6 +118,12 @@ export default function InvoicePrintPage({ params }: { params: Promise<{ id: str
             </tr>
           </tfoot>
         </table>
+
+        {company?.promptpayId && isValidPromptPayId(company.promptpayId) && invoice.status !== 'paid' && (
+          <div className="mb-6 flex justify-center border-t border-slate-100 pt-6">
+            <PromptPayQR promptpayId={company.promptpayId} amount={Number(invoice.totalAmount)} />
+          </div>
+        )}
 
         <p className="text-center text-xs text-slate-400">ขอบคุณที่ใช้บริการ · สร้างโดยระบบ DoDee</p>
       </div>

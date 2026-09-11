@@ -7,6 +7,8 @@ import ImageUploader from '@/components/ImageUploader';
 import AvatarPicker from '@/components/AvatarPicker';
 import ChangePasswordForm from '@/components/ChangePasswordForm';
 import { useConfirm } from '@/components/ConfirmDialog';
+import PromptPayQR from '@/components/PromptPayQR';
+import { isValidPromptPayId } from '@/lib/promptpay';
 
 interface LineSettingsResponse {
   accessTokenConfigured: boolean;
@@ -351,6 +353,7 @@ interface CompanyProfile {
   address: string;
   phone: string;
   logoUrl: string;
+  promptpayId: string;
 }
 
 function CompanyProfileSettings() {
@@ -358,6 +361,7 @@ function CompanyProfileSettings() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [promptpayId, setPromptpayId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -369,6 +373,7 @@ function CompanyProfileSettings() {
       setAddress(c.address);
       setPhone(c.phone);
       setLogoUrl(c.logoUrl);
+      setPromptpayId(c.promptpayId || '');
     });
   }, []);
 
@@ -378,7 +383,7 @@ function CompanyProfileSettings() {
     setNotice(null);
     setSaving(true);
     try {
-      await api.put('/settings/company', { name, address, phone, logoUrl });
+      await api.put('/settings/company', { name, address, phone, logoUrl, promptpayId });
       setNotice('บันทึกข้อมูลบริษัทสำเร็จ');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ');
@@ -426,6 +431,29 @@ function CompanyProfileSettings() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            เบอร์พร้อมเพย์ (PromptPay) <span className="font-normal text-slate-400">- ไม่บังคับ</span>
+          </label>
+          <input
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={promptpayId}
+            onChange={(e) => setPromptpayId(e.target.value)}
+            placeholder="เบอร์โทร 10 หลัก หรือเลขบัตรประชาชน/เลขผู้เสียภาษี 13 หลัก"
+          />
+          <p className="mt-1 text-xs text-slate-400">
+            ใส่ไว้เพื่อให้ใบเรียกเก็บของผู้เช่ามี QR code สแกนจ่ายได้เลย จะไม่แสดงถ้าปล่อยว่างไว้
+          </p>
+          {promptpayId.trim() && (
+            <div className="mt-3">
+              {isValidPromptPayId(promptpayId) ? (
+                <PromptPayQR promptpayId={promptpayId} amount={100} />
+              ) : (
+                <p className="text-xs text-red-600">รูปแบบไม่ถูกต้อง ต้องเป็นเบอร์โทร 10 หลัก (เช่น 0812345678) หรือเลข 13 หลัก</p>
+              )}
+            </div>
+          )}
         </div>
         <button
           type="submit"

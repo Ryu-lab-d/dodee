@@ -49,7 +49,7 @@ const updateLineSettings = asyncHandler(async (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-const COMPANY_KEYS = ['company_name', 'company_address', 'company_phone', 'company_logo_url'];
+const COMPANY_KEYS = ['company_name', 'company_address', 'company_phone', 'company_logo_url', 'company_promptpay_id'];
 
 const getCompanySettings = asyncHandler(async (req, res) => {
   const rows = await Setting.findAll({ where: { key: COMPANY_KEYS } });
@@ -59,16 +59,18 @@ const getCompanySettings = asyncHandler(async (req, res) => {
     address: map.company_address || '',
     phone: map.company_phone || '',
     logoUrl: map.company_logo_url || '',
+    promptpayId: map.company_promptpay_id || '',
   });
 });
 
 const updateCompanySettings = asyncHandler(async (req, res) => {
-  const { name, address, phone, logoUrl } = req.body;
+  const { name, address, phone, logoUrl, promptpayId } = req.body;
   await Promise.all([
     Setting.upsert({ key: 'company_name', value: name ?? '' }),
     Setting.upsert({ key: 'company_address', value: address ?? '' }),
     Setting.upsert({ key: 'company_phone', value: phone ?? '' }),
     Setting.upsert({ key: 'company_logo_url', value: logoUrl ?? '' }),
+    Setting.upsert({ key: 'company_promptpay_id', value: promptpayId ?? '' }),
   ]);
   res.status(200).json({ ok: true });
 });
