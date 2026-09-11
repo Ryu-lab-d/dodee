@@ -20,6 +20,7 @@ import {
   LogOut,
   LogIn,
   Radio,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -46,6 +47,7 @@ const NAV_ITEMS: Array<{ href: string; label: string; icon: LucideIcon; ownerOnl
   { href: '/permissions', label: 'สิทธิ์การใช้งาน', icon: ShieldCheck, ownerOnly: true },
   { href: '/attendance-report', label: 'เวลาทำงาน', icon: ClipboardCheck, ownerOnly: true },
   { href: '/settings', label: 'ตั้งค่า', icon: Settings },
+  { href: '/help', label: 'วิธีใช้งาน', icon: HelpCircle },
 ];
 
 function CheckOutButton() {

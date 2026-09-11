@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
   Settings,
   Radio,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -43,6 +44,7 @@ const MORE_ITEMS: Array<{ href: string; label: string; icon: LucideIcon; ownerOn
   { href: '/permissions', label: 'สิทธิ์การใช้งาน', icon: ShieldCheck, ownerOnly: true },
   { href: '/attendance-report', label: 'เวลาทำงาน', icon: ClipboardCheck, ownerOnly: true },
   { href: '/settings', label: 'ตั้งค่า', icon: Settings },
+  { href: '/help', label: 'วิธีใช้งาน', icon: HelpCircle },
 ];
 
 function TabButton({ href, label, icon: Icon, active }: { href: string; label: string; icon: LucideIcon; active: boolean }) {
