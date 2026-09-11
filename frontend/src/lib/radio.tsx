@@ -4,18 +4,30 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback, Re
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './auth';
 import { ORIGIN } from './api';
-import { unlockRadioAudio, playKeyDownTone, playKeyUpTone, playBusyTone } from './radioTones';
+import {
+  unlockRadioAudio,
+  playKeyDownTone,
+  playKeyUpTone,
+  playBusyTone,
+  playEmergencyTone,
+  vibrateEmergency,
+} from './radioTones';
 
-interface RadioMember {
+export interface RadioMember {
   id: string;
   name: string;
   role: string;
   avatarUrl?: string | null;
 }
 
+type TalkMode = 'broadcast' | 'private' | 'emergency';
+
 interface TalkingUser {
   userId: string;
   name: string;
+  mode: TalkMode;
+  targetUserId?: string;
+  targetName?: string;
 }
 
 interface RadioContextValue {
@@ -23,9 +35,14 @@ interface RadioContextValue {
   online: RadioMember[];
   talkingUser: TalkingUser | null;
   isMine: boolean;
+  isCalledByPrivate: boolean;
   busyMessage: string | null;
+  notice: string | null;
   micError: string | null;
+  selectedTarget: RadioMember | null;
+  selectTarget: (member: RadioMember | null) => void;
   startTalking: () => void;
+  startEmergency: () => void;
   stopTalking: () => void;
 }
 
@@ -51,13 +68,29 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const chunksRef = useRef<Blob[]>([]);
   const segmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdingRef = useRef(false);
+  const abortRef = useRef(false);
   const playQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const [connected, setConnected] = useState(false);
   const [online, setOnline] = useState<RadioMember[]>([]);
   const [talkingUser, setTalkingUser] = useState<TalkingUser | null>(null);
   const [busyMessage, setBusyMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<RadioMember | null>(null);
+  const selectedTargetRef = useRef<RadioMember | null>(null);
+
+  const selectTarget = useCallback((member: RadioMember | null) => {
+    selectedTargetRef.current = member;
+    setSelectedTarget(member);
+  }, []);
+
+  // Drop the selection if that person leaves the channel entirely.
+  useEffect(() => {
+    if (selectedTarget && !online.some((m) => m.id === selectedTarget.id)) {
+      selectTarget(null);
+    }
+  }, [online, selectedTarget, selectTarget]);
 
   const stopStream = useCallback(() => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
@@ -71,32 +104,42 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   // its own self-contained clip (with its own container header) sent as soon as it's ready,
   // then immediately followed by the next segment - until the button is released, at which
   // point the in-flight segment is flushed as the final one instead of starting another.
-  const recordSegment = useCallback((stream: MediaStream) => {
-    chunksRef.current = [];
-    const mimeType = pickMimeType();
-    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    recorderRef.current = recorder;
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-    recorder.onstop = async () => {
-      const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
-      if (blob.size > 0) {
-        const buffer = await blob.arrayBuffer();
-        socketRef.current?.emit('talk:audio', { data: buffer, mimeType: recorder.mimeType || 'audio/webm' });
-      }
-      if (holdingRef.current && streamRef.current) {
-        recordSegment(streamRef.current);
-      } else {
-        stopStream();
-        socketRef.current?.emit('talk:end');
-      }
-    };
-    recorder.start();
-    segmentTimerRef.current = setTimeout(() => {
-      if (recorderRef.current === recorder && recorder.state === 'recording') recorder.stop();
-    }, SEGMENT_MS);
-  }, [stopStream]);
+  const recordSegment = useCallback(
+    (stream: MediaStream) => {
+      chunksRef.current = [];
+      const mimeType = pickMimeType();
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        if (abortRef.current) {
+          // Preempted by an emergency call, or the private-call target went offline -
+          // the server has already moved on, so there's nothing useful to send.
+          abortRef.current = false;
+          stopStream();
+          return;
+        }
+        if (blob.size > 0) {
+          const buffer = await blob.arrayBuffer();
+          socketRef.current?.emit('talk:audio', { data: buffer, mimeType: recorder.mimeType || 'audio/webm' });
+        }
+        if (holdingRef.current && streamRef.current) {
+          recordSegment(streamRef.current);
+        } else {
+          stopStream();
+          socketRef.current?.emit('talk:end');
+        }
+      };
+      recorder.start();
+      segmentTimerRef.current = setTimeout(() => {
+        if (recorderRef.current === recorder && recorder.state === 'recording') recorder.stop();
+      }, SEGMENT_MS);
+    },
+    [stopStream]
+  );
 
   const beginRecording = useCallback(() => {
     navigator.mediaDevices
@@ -113,9 +156,29 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         setMicError('ไม่สามารถเข้าถึงไมโครโฟนได้ กรุณาอนุญาตการใช้งานไมโครโฟน');
+        holdingRef.current = false;
         socketRef.current?.emit('talk:end');
       });
   }, [recordSegment]);
+
+  // Stops the mic immediately without letting the in-flight segment send - used when the
+  // server tells us our channel hold is no longer valid (preempted, or nobody's listening).
+  const hardStop = useCallback(
+    (message: string, playTone: () => void) => {
+      abortRef.current = true;
+      holdingRef.current = false;
+      if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
+      if (recorderRef.current && recorderRef.current.state === 'recording') {
+        recorderRef.current.stop();
+      } else {
+        stopStream();
+      }
+      playTone();
+      setNotice(message);
+      setTimeout(() => setNotice(null), 3000);
+    },
+    [stopStream]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -140,6 +203,8 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       setBusyMessage(`ช่องไม่ว่าง - ${name} กำลังพูดอยู่`);
       setTimeout(() => setBusyMessage(null), 2000);
     });
+    socket.on('talk:preempted', () => hardStop('การเรียกของคุณถูกแทรกโดยสายฉุกเฉิน', playBusyTone));
+    socket.on('talk:target-offline', () => hardStop('ผู้รับสายไม่ได้ออนไลน์แล้ว', playBusyTone));
     socket.on('talk:audio', ({ data, mimeType }: { data: ArrayBuffer; mimeType?: string }) => {
       // Segments are queued and played back-to-back (not fired off in parallel) so a fast
       // run of short clips from one transmission still sounds like one continuous voice.
@@ -165,7 +230,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       socketRef.current = null;
       stopStream();
     };
-  }, [user, beginRecording, stopStream]);
+  }, [user, beginRecording, stopStream, hardStop]);
 
   const startTalking = useCallback(() => {
     if (holdingRef.current || !socketRef.current) return;
@@ -173,7 +238,18 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     setMicError(null);
     unlockRadioAudio();
     playKeyDownTone();
-    socketRef.current.emit('talk:request');
+    const target = selectedTargetRef.current;
+    socketRef.current.emit('talk:request', target ? { targetUserId: target.id } : {});
+  }, []);
+
+  const startEmergency = useCallback(() => {
+    if (holdingRef.current || !socketRef.current) return;
+    holdingRef.current = true;
+    setMicError(null);
+    unlockRadioAudio();
+    playEmergencyTone();
+    vibrateEmergency();
+    socketRef.current.emit('talk:request', { emergency: true });
   }, []);
 
   const stopTalking = useCallback(() => {
@@ -187,10 +263,26 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isMine = !!talkingUser && !!user && talkingUser.userId === user.id;
+  const isCalledByPrivate =
+    !!talkingUser && talkingUser.mode === 'private' && !!user && talkingUser.targetUserId === user.id;
 
   return (
     <RadioContext.Provider
-      value={{ connected, online, talkingUser, isMine, busyMessage, micError, startTalking, stopTalking }}
+      value={{
+        connected,
+        online,
+        talkingUser,
+        isMine,
+        isCalledByPrivate,
+        busyMessage,
+        notice,
+        micError,
+        selectedTarget,
+        selectTarget,
+        startTalking,
+        startEmergency,
+        stopTalking,
+      }}
     >
       {children}
     </RadioContext.Provider>

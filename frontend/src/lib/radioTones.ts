@@ -43,3 +43,20 @@ export const playBusyTone = () => {
   tone(500, 400, 90, 0.18);
   tone(500, 400, 90, 0.18, 130);
 };
+
+// Distinct alternating siren - deliberately more urgent/longer than the ordinary chirps so
+// an emergency call is unmistakable even with the widget closed.
+export const playEmergencyTone = () => {
+  for (let i = 0; i < 3; i += 1) {
+    tone(950, 950, 140, 0.22, i * 280);
+    tone(650, 650, 140, 0.22, i * 280 + 140);
+  }
+};
+
+export const vibrateEmergency = () => {
+  try {
+    navigator.vibrate?.([200, 100, 200, 100, 200]);
+  } catch {
+    // vibration unsupported - harmless no-op
+  }
+};
