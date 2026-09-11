@@ -121,4 +121,58 @@ const generate = asyncHandler(async (req, res) => {
   res.status(201).json({ created, skipped });
 });
 
-module.exports = { list, getOne, generate };
+// Manual single-invoice creation - for charges "สร้างใบเรียกเก็บของเดือนนี้" can't cover
+// (a room with no meter reading yet, a one-off repair/extra charge, a negotiated rent).
+// Still bound by the same one-invoice-per-room-per-month rule as generate (DB unique index
+// on roomId+billingMonth), so this fills in a missing month rather than adding a second bill.
+const create = asyncHandler(async (req, res) => {
+  const { roomId, billingMonth, invoiceDate, dueDate, baseRent, waterCharge, electricityCharge, otherCharges } = req.body;
+  if (!roomId || !billingMonth) {
+    return res.status(400).json({ message: 'roomId และ billingMonth จำเป็นต้องกรอก' });
+  }
+
+  const room = await Room.findByPk(roomId);
+  const propertyIds = await propertyIdsForUser(req.user);
+  if (!room || !propertyIds.includes(room.propertyId)) {
+    return res.status(404).json({ message: 'Room not found' });
+  }
+
+  const existing = await Invoice.findOne({ where: { roomId, billingMonth } });
+  if (existing) {
+    return res.status(409).json({ message: 'ห้องนี้มีใบเรียกเก็บของเดือนนี้อยู่แล้ว' });
+  }
+
+  const base = Number(baseRent || 0);
+  const water = Number(waterCharge || 0);
+  const electricity = Number(electricityCharge || 0);
+  const extra = Number(otherCharges || 0);
+  const totalAmount = base + water + electricity + extra;
+  if (totalAmount <= 0) {
+    return res.status(400).json({ message: 'ยอดรวมต้องมากกว่า 0 บาท' });
+  }
+
+  let resolvedDueDate = dueDate;
+  if (!resolvedDueDate) {
+    const d = new Date();
+    d.setDate(d.getDate() + DUE_DAYS);
+    resolvedDueDate = d.toISOString().slice(0, 10);
+  }
+
+  const invoice = await Invoice.create({
+    roomId,
+    invoiceDate: invoiceDate || new Date().toISOString().slice(0, 10),
+    billingMonth,
+    baseRent: base,
+    waterCharge: water,
+    electricityCharge: electricity,
+    otherCharges: extra,
+    totalAmount,
+    status: 'issued',
+    dueDate: resolvedDueDate,
+  });
+
+  logActivity(req.user, 'create_invoice', `สร้างใบเรียกเก็บด้วยตนเอง ห้อง ${room.roomNumber} งวด ${billingMonth} ฿${totalAmount.toLocaleString()}`);
+  res.status(201).json(invoice);
+});
+
+module.exports = { list, getOne, generate, create };

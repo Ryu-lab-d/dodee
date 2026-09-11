@@ -3,12 +3,194 @@
 import { Fragment, useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
-import { Invoice, InvoiceStatus } from '@/lib/types';
+import { Invoice, InvoiceStatus, Room } from '@/lib/types';
 import { SkeletonRows } from '@/components/Skeleton';
 import { useConfirm } from '@/components/ConfirmDialog';
 import { downloadCsv } from '@/lib/csv';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
+
+function roomOptionLabel(room: Room) {
+  const tenant = room.tenants?.find((t) => t.status === 'เช่าอยู่');
+  const place = room.roomNumber === 'หลัก' ? room.property?.name : `${room.property?.name} - ห้อง ${room.roomNumber}`;
+  return `${place || ''}${tenant ? ` (${tenant.name})` : ' (ว่าง)'}`;
+}
+
+function CreateInvoiceModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomId, setRoomId] = useState('');
+  const [billingMonth, setBillingMonth] = useState(thisMonth());
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState('');
+  const [baseRent, setBaseRent] = useState('');
+  const [waterCharge, setWaterCharge] = useState('');
+  const [electricityCharge, setElectricityCharge] = useState('');
+  const [otherCharges, setOtherCharges] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api.get<Room[]>('/rooms').then((list) => {
+      setRooms(list);
+      if (list[0]) setRoomId(list[0].id);
+    });
+  }, []);
+
+  const total =
+    (Number(baseRent) || 0) + (Number(waterCharge) || 0) + (Number(electricityCharge) || 0) + (Number(otherCharges) || 0);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!roomId) {
+      setError('กรุณาเลือกห้อง');
+      return;
+    }
+    if (total <= 0) {
+      setError('ยอดรวมต้องมากกว่า 0 บาท');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post('/invoices', {
+        roomId,
+        billingMonth,
+        invoiceDate,
+        dueDate: dueDate || undefined,
+        baseRent: baseRent || undefined,
+        waterCharge: waterCharge || undefined,
+        electricityCharge: electricityCharge || undefined,
+        otherCharges: otherCharges || undefined,
+      });
+      onCreated();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'สร้างใบเรียกเก็บไม่สำเร็จ');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40 p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+        <h2 className="mb-1 text-lg font-semibold text-slate-900">สร้างใบเรียกเก็บด้วยตนเอง</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          สำหรับห้องที่ยังไม่มีบิลของเดือนนี้ เช่น ยังไม่มีการจดมิเตอร์ หรือมีค่าใช้จ่ายพิเศษนอกเหนือจากค่าเช่าปกติ
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">ห้อง / ทรัพย์สิน</label>
+            <select
+              required
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+            >
+              {rooms.length === 0 && <option value="">ไม่มีห้องให้เลือก</option>}
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {roomOptionLabel(r)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">งวดบิล (เดือน)</label>
+              <input
+                type="month"
+                required
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={billingMonth}
+                onChange={(e) => setBillingMonth(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">วันที่ออกบิล</label>
+              <input
+                type="date"
+                required
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">ครบกำหนด</label>
+              <input
+                type="date"
+                placeholder="ค่าเริ่มต้น +10 วัน"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700">ค่าเช่า</label>
+              <input
+                type="number" step="0.01" min="0"
+                className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={baseRent}
+                onChange={(e) => setBaseRent(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700">ค่าน้ำ</label>
+              <input
+                type="number" step="0.01" min="0"
+                className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={waterCharge}
+                onChange={(e) => setWaterCharge(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700">ค่าไฟ</label>
+              <input
+                type="number" step="0.01" min="0"
+                className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={electricityCharge}
+                onChange={(e) => setElectricityCharge(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-700">อื่นๆ</label>
+              <input
+                type="number" step="0.01" min="0"
+                className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={otherCharges}
+                onChange={(e) => setOtherCharges(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+            <span className="text-slate-500">ยอดรวม</span>
+            <span className="font-semibold text-slate-900">฿{total.toLocaleString()}</span>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <button
+              type="submit"
+              disabled={saving || rooms.length === 0}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving ? 'กำลังสร้าง...' : 'สร้างใบเรียกเก็บ'}
+            </button>
+            <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100">
+              ยกเลิก
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const STATUS_STYLE: Record<InvoiceStatus, string> = {
   draft: 'bg-slate-100 text-slate-700',
@@ -32,6 +214,7 @@ export default function InvoicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [payingId, setPayingId] = useState<string | null>(null);
   const [amountPaid, setAmountPaid] = useState('');
@@ -160,8 +343,25 @@ export default function InvoicesPage() {
           >
             {generating ? 'กำลังสร้าง...' : 'สร้างใบเรียกเก็บของเดือนนี้'}
           </button>
+          <button type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="rounded-lg border border-blue-200 px-4 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50"
+          >
+            + สร้างบิลเอง
+          </button>
         </div>
       </div>
+
+      {showCreateModal && (
+        <CreateInvoiceModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            setNotice('สร้างใบเรียกเก็บสำเร็จ');
+            load();
+          }}
+        />
+      )}
 
       {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
       {notice && <div className="mb-4 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">{notice}</div>}

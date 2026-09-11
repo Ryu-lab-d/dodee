@@ -8,5 +8,6 @@ router.use(authenticate);
 router.get('/', ctrl.list);
 router.get('/:id', ctrl.getOne);
 router.post('/generate', requirePermission('invoiceManage'), ctrl.generate);
+router.post('/', requirePermission('invoiceManage'), ctrl.create);
 
 module.exports = router;
