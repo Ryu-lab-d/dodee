@@ -1,5 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-const ORIGIN = BASE_URL.replace(/\/api\/?$/, '');
+export const ORIGIN = BASE_URL.replace(/\/api\/?$/, '');
 
 // Backend returns relative paths like "/uploads/xyz.png" - resolve them against the API origin.
 export const fileUrl = (path?: string | null) => {

@@ -1,8 +1,10 @@
 require('dotenv').config();
+const http = require('http');
 const cron = require('node-cron');
 const app = require('./app');
 const { sequelize } = require('./models');
 const { runDailyChecks } = require('./services/notification.service');
+const attachRadio = require('./services/radio.service');
 
 const PORT = process.env.PORT || 4000;
 
@@ -25,7 +27,9 @@ const start = async () => {
         .catch((err) => console.error('[cron] daily checks failed:', err));
     });
 
-    app.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`));
+    const server = http.createServer(app);
+    attachRadio(server);
+    server.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`));
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);

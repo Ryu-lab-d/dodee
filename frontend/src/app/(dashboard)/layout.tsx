@@ -4,9 +4,11 @@ import { useEffect, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useAttendance } from '@/lib/attendance';
+import { RadioProvider } from '@/lib/radio';
 import { useSplashGate } from '@/lib/useSplashGate';
 import TopNav from '@/components/TopNav';
 import MobileTabBar from '@/components/MobileTabBar';
+import RadioWidget from '@/components/RadioWidget';
 import LoadingScreen from '@/components/LoadingScreen';
 import { AttendanceStatus } from '@/lib/types';
 
@@ -43,12 +45,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <TopNav />
-      <main key={pathname} className="page-fade-in mx-auto w-full max-w-6xl flex-1 p-4 pb-24 md:p-6 md:pb-6">
-        {children}
-      </main>
-      <MobileTabBar />
-    </div>
+    <RadioProvider>
+      <div className="flex flex-1 flex-col">
+        <TopNav />
+        <main key={pathname} className="page-fade-in mx-auto w-full max-w-6xl flex-1 p-4 pb-24 md:p-6 md:pb-6">
+          {children}
+        </main>
+        <MobileTabBar />
+        <RadioWidget />
+      </div>
+    </RadioProvider>
   );
 }
