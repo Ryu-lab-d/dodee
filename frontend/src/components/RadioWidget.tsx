@@ -39,8 +39,18 @@ export default function RadioWidget() {
     startTalking,
     startEmergency,
     stopTalking,
+    missedCount,
+    markSeen,
+    recentEvents,
   } = useRadio();
   const [open, setOpen] = useState(false);
+
+  const toggleOpen = () => {
+    setOpen((v) => {
+      if (!v) markSeen();
+      return !v;
+    });
+  };
 
   const others = online.filter((m) => m.id !== user?.id);
   const somebodyElseTalking = !!talkingUser && !isMine;
@@ -105,6 +115,20 @@ export default function RadioWidget() {
               <X size={18} />
             </button>
           </div>
+
+          {recentEvents.length > 0 && (
+            <div className="mb-3 max-h-24 space-y-1 overflow-y-auto rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] text-slate-500">
+              {recentEvents.slice(0, 5).map((e) => (
+                <p key={e.id} className="truncate">
+                  {e.mode === 'emergency' ? '🚨 ' : ''}
+                  <span className="font-medium text-slate-700">{e.name}</span>
+                  {e.mode === 'private' ? ` โทรหา ${e.targetName}` : ' พูดในช่องทั่วไป'}
+                  {' · '}
+                  {new Date(e.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              ))}
+            </div>
+          )}
 
           {others.length > 0 ? (
             <div className="mb-3 flex flex-wrap gap-2">
@@ -176,7 +200,7 @@ export default function RadioWidget() {
 
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleOpen}
         className={`fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors md:bottom-6 relative ${
           emergencyActive ? 'bg-red-600' : talkingUser ? 'bg-red-600' : 'bg-cyan-700'
         } text-white`}
@@ -186,6 +210,11 @@ export default function RadioWidget() {
           <Siren size={24} className="animate-pulse" />
         ) : (
           <Radio size={24} className={talkingUser ? 'animate-pulse' : ''} />
+        )}
+        {!open && missedCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+            {missedCount > 9 ? '9+' : missedCount}
+          </span>
         )}
       </button>
     </>

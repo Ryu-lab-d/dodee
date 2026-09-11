@@ -26,6 +26,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useAttendance } from '@/lib/attendance';
+import { useRadio } from '@/lib/radio';
 import { useConfirm } from '@/components/ConfirmDialog';
 import { api, ApiError } from '@/lib/api';
 import NotificationBell from './NotificationBell';
@@ -92,6 +93,7 @@ export default function TopNav() {
   const { user, logout } = useAuth();
 
   const items = NAV_ITEMS.filter((item) => !item.ownerOnly || user?.role === 'owner');
+  const { missedCount } = useRadio();
 
   return (
     <header className="sticky top-0 z-10 border-b border-blue-100 bg-white/90 backdrop-blur print:hidden">
@@ -135,13 +137,18 @@ export default function TopNav() {
           return (
             <Link key={item.href} href={item.href} className="group flex flex-col items-center justify-self-center gap-1.5 lg:gap-2">
               <span
-                className={`flex h-[50px] w-[50px] items-center justify-center rounded-2xl border transition-all duration-150 lg:h-16 lg:w-16 lg:rounded-[1.5rem] xl:h-[76px] xl:w-[76px] xl:rounded-[1.75rem] ${
+                className={`relative flex h-[50px] w-[50px] items-center justify-center rounded-2xl border transition-all duration-150 lg:h-16 lg:w-16 lg:rounded-[1.5rem] xl:h-[76px] xl:w-[76px] xl:rounded-[1.75rem] ${
                   active
                     ? 'border-blue-600 bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-200'
                     : 'border-slate-100 bg-slate-50 text-slate-500 shadow-sm group-hover:-translate-y-0.5 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:shadow-md'
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] lg:h-6 lg:w-6 xl:h-8 xl:w-8" strokeWidth={active ? 2.1 : 1.8} />
+                {item.href === '/radio' && missedCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                    {missedCount > 9 ? '9+' : missedCount}
+                  </span>
+                )}
               </span>
               <span
                 className={`text-center text-[9px] leading-tight font-medium lg:text-[11px] xl:text-sm ${active ? 'text-blue-700' : 'text-slate-500'}`}

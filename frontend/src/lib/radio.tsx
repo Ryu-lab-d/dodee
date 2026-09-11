@@ -30,6 +30,16 @@ interface TalkingUser {
   targetName?: string;
 }
 
+export interface RecentRadioEvent {
+  id: string;
+  userId: string;
+  name: string;
+  mode: TalkMode;
+  targetUserId?: string;
+  targetName?: string;
+  at: number;
+}
+
 interface RadioContextValue {
   connected: boolean;
   online: RadioMember[];
@@ -44,7 +54,17 @@ interface RadioContextValue {
   startTalking: () => void;
   startEmergency: () => void;
   stopTalking: () => void;
+  recentEvents: RecentRadioEvent[];
+  missedCount: number;
+  markSeen: () => void;
 }
+
+const RECENT_EVENTS_LIMIT = 15;
+
+// A transmission is "for me" if I could plausibly have wanted to hear it - broadcasts and
+// emergencies reach everyone, a private call only reaches its actual target.
+const isForMe = (payload: TalkingUser, myId?: string) =>
+  payload.mode === 'private' ? payload.targetUserId === myId : true;
 
 const MIME_CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
 
@@ -81,6 +101,26 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const [micError, setMicError] = useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<RadioMember | null>(null);
   const selectedTargetRef = useRef<RadioMember | null>(null);
+  const [recentEvents, setRecentEvents] = useState<RecentRadioEvent[]>([]);
+  const [missedCount, setMissedCount] = useState(0);
+  const titleFlashRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const originalTitleRef = useRef<string | null>(null);
+
+  const markSeen = useCallback(() => {
+    setMissedCount(0);
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  const stopTitleFlash = useCallback(() => {
+    if (titleFlashRef.current) clearInterval(titleFlashRef.current);
+    titleFlashRef.current = null;
+    if (originalTitleRef.current !== null) {
+      document.title = originalTitleRef.current;
+      originalTitleRef.current = null;
+    }
+  }, []);
 
   const selectTarget = useCallback((member: RadioMember | null) => {
     selectedTargetRef.current = member;
@@ -93,6 +133,15 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       selectTarget(null);
     }
   }, [online, selectedTarget, selectTarget]);
+
+  // Clear a flashing tab title the moment the tab is looked at again, even mid-flash.
+  useEffect(() => {
+    const onVisible = () => {
+      if (!document.hidden) stopTitleFlash();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [stopTitleFlash]);
 
   const stopStream = useCallback(() => {
     if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
@@ -193,8 +242,49 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
     socket.on('presence', (list: RadioMember[]) => setOnline(list));
-    socket.on('talk:start', (payload: TalkingUser) => setTalkingUser(payload));
-    socket.on('talk:end', () => setTalkingUser(null));
+    socket.on('talk:start', (payload: TalkingUser) => {
+      setTalkingUser(payload);
+      setRecentEvents((prev) =>
+        [{ id: `${payload.userId}-${Date.now()}`, ...payload, at: Date.now() }, ...prev].slice(0, RECENT_EVENTS_LIMIT)
+      );
+
+      const forMe = payload.userId !== user.id && isForMe(payload, user.id);
+      if (!forMe) return;
+      setMissedCount((c) => c + 1);
+
+      if (document.hidden) {
+        const alertLabel =
+          payload.mode === 'emergency'
+            ? `🚨 ${payload.name} เรียกฉุกเฉิน!`
+            : payload.mode === 'private'
+              ? `📻 ${payload.name} กำลังโทรหาคุณ`
+              : `📻 ${payload.name} กำลังพูด`;
+
+        if (!titleFlashRef.current) {
+          originalTitleRef.current = document.title;
+          let flashOn = true;
+          document.title = alertLabel; // show it immediately - a short "ping" transmission
+          // can end before the first setInterval tick would otherwise ever fire.
+          titleFlashRef.current = setInterval(() => {
+            flashOn = !flashOn;
+            document.title = flashOn ? alertLabel : originalTitleRef.current || document.title;
+          }, 1000);
+        }
+
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          try {
+            new Notification(alertLabel, { body: 'แตะเพื่อเปิดแอป DoDee', tag: 'dodee-radio' });
+          } catch {
+            // Notification construction can throw in some contexts (e.g. no service worker
+            // on iOS) - the tab-title flash above already covers the alert either way.
+          }
+        }
+      }
+    });
+    socket.on('talk:end', () => {
+      setTalkingUser(null);
+      stopTitleFlash();
+    });
     socket.on('talk:granted', () => {
       if (holdingRef.current) beginRecording();
       else socket.emit('talk:end');
@@ -231,8 +321,9 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       socket.disconnect();
       socketRef.current = null;
       stopStream();
+      stopTitleFlash();
     };
-  }, [user, beginRecording, stopStream, hardStop]);
+  }, [user, beginRecording, stopStream, hardStop, stopTitleFlash]);
 
   const startTalking = useCallback(() => {
     if (holdingRef.current || !socketRef.current) return;
@@ -284,6 +375,9 @@ export function RadioProvider({ children }: { children: ReactNode }) {
         startTalking,
         startEmergency,
         stopTalking,
+        recentEvents,
+        missedCount,
+        markSeen,
       }}
     >
       {children}

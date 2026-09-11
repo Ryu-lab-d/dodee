@@ -1,6 +1,7 @@
 'use client';
 
-import { Mic, PhoneCall, Radio as RadioIcon, Siren } from 'lucide-react';
+import { useEffect } from 'react';
+import { Mic, PhoneCall, Radio as RadioIcon, Siren, History } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useRadio, RadioMember } from '@/lib/radio';
 
@@ -93,7 +94,13 @@ export default function RadioPage() {
     startTalking,
     startEmergency,
     stopTalking,
+    recentEvents,
+    markSeen,
   } = useRadio();
+
+  useEffect(() => {
+    markSeen();
+  }, [markSeen]);
 
   const others = online.filter((m) => m.id !== user?.id);
   const somebodyElseTalking = !!talkingUser && !isMine;
@@ -226,6 +233,32 @@ export default function RadioPage() {
           </div>
         </div>
       </div>
+
+      {recentEvents.length > 0 && (
+        <div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+          <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <History size={14} /> กิจกรรมล่าสุด
+          </p>
+          <div className="space-y-2">
+            {recentEvents.map((e) => (
+              <div key={e.id} className="flex items-center justify-between border-b border-slate-50 pb-2 text-sm last:border-0">
+                <p className="text-slate-700">
+                  {e.mode === 'emergency' && <span className="mr-1">🚨</span>}
+                  <span className="font-medium text-slate-900">{e.name}</span>{' '}
+                  {e.mode === 'emergency'
+                    ? 'เรียกฉุกเฉิน'
+                    : e.mode === 'private'
+                      ? `โทรหา ${e.targetName}`
+                      : 'พูดในช่องทั่วไป'}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {new Date(e.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

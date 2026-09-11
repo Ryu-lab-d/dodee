@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useRadio } from '@/lib/radio';
 
 const PRIMARY_TABS: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: '/dashboard', label: 'หน้าแรก', icon: LayoutDashboard },
@@ -65,6 +66,7 @@ export default function MobileTabBar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { missedCount } = useRadio();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
   const moreItems = MORE_ITEMS.filter((item) => !item.ownerOnly || user?.role === 'owner');
@@ -81,10 +83,15 @@ export default function MobileTabBar() {
         ))}
         <button type="button"
           onClick={() => setMoreOpen(true)}
-          className="flex flex-1 flex-col items-center justify-center gap-1 py-1.5 transition-transform active:scale-90"
+          className="relative flex flex-1 flex-col items-center justify-center gap-1 py-1.5 transition-transform active:scale-90"
         >
           <Menu className={`h-6 w-6 ${moreActive ? 'text-blue-600' : 'text-slate-400'}`} strokeWidth={moreActive ? 2.3 : 1.9} />
           <span className={`text-[10px] ${moreActive ? 'font-semibold text-blue-600' : 'text-slate-400'}`}>เพิ่มเติม</span>
+          {missedCount > 0 && (
+            <span className="absolute right-4 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+              {missedCount > 9 ? '9+' : missedCount}
+            </span>
+          )}
         </button>
       </nav>
 
@@ -121,11 +128,16 @@ export default function MobileTabBar() {
                     className="flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-transform active:scale-95"
                   >
                     <span
-                      className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
+                      className={`relative flex h-14 w-14 items-center justify-center rounded-2xl ${
                         active ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       <Icon className="h-6 w-6" strokeWidth={active ? 2.2 : 1.8} />
+                      {item.href === '/radio' && missedCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                          {missedCount > 9 ? '9+' : missedCount}
+                        </span>
+                      )}
                     </span>
                     <span className={`text-center text-[11px] ${active ? 'font-semibold text-blue-700' : 'text-slate-500'}`}>
                       {item.label}
