@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
+import { Check, Minus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -62,15 +63,20 @@ function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: (
       aria-checked={checked}
       disabled={disabled}
       onClick={onChange}
-      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-wait ${
-        checked ? 'bg-blue-600' : 'bg-slate-200'
+      // A borderless light-grey "off" track used to disappear against the white table cells,
+      // making it hard to tell at a glance which switches were on vs off. A visible border on
+      // the off state plus a check/dash glyph inside the knob (not color alone) fixes that.
+      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors disabled:cursor-wait ${
+        checked ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-slate-100'
       }`}
     >
       <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5'
+        className={`absolute top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-[21px]' : 'translate-x-0.5'
         } ${disabled ? 'animate-pulse' : ''}`}
-      />
+      >
+        {checked ? <Check size={12} className="text-blue-600" strokeWidth={3} /> : <Minus size={10} className="text-slate-400" strokeWidth={3} />}
+      </span>
     </button>
   );
 }
@@ -149,8 +155,8 @@ export default function PermissionsPage() {
           <thead className="border-b border-blue-100 bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">สิทธิ์การใช้งาน</th>
-              <th className="px-4 py-2 text-center font-medium">แอดมิน</th>
-              <th className="px-4 py-2 text-center font-medium">ผู้จัดการ</th>
+              <th className="border-l border-slate-100 px-4 py-2 text-center font-medium">แอดมิน</th>
+              <th className="border-l border-slate-100 px-4 py-2 text-center font-medium">ผู้จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -161,10 +167,13 @@ export default function PermissionsPage() {
                     {group.label}
                   </td>
                 </tr>
-                {group.permissions.map((perm) => (
-                  <tr key={perm.key} className="border-b border-slate-100 last:border-0">
+                {group.permissions.map((perm, i) => (
+                  <tr
+                    key={perm.key}
+                    className={`border-b border-slate-100 last:border-0 hover:bg-blue-50/40 ${i % 2 === 1 ? 'bg-slate-50/40' : ''}`}
+                  >
                     <td className="px-4 py-2.5 text-slate-700">{perm.label}</td>
-                    <td className="px-4 py-2.5">
+                    <td className="border-l border-slate-100 px-4 py-2.5">
                       <div className="flex justify-center">
                         <Switch
                           checked={!!data.matrix.admin[perm.key]}
@@ -173,7 +182,7 @@ export default function PermissionsPage() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td className="border-l border-slate-100 px-4 py-2.5">
                       <div className="flex justify-center">
                         <Switch
                           checked={!!data.matrix.manager[perm.key]}
