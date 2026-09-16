@@ -202,12 +202,20 @@ export default function TenantAssignPanel({ room, onSaved }: { room: Room; onSav
 
   if (!showForm) {
     return (
-      <button type="button"
-        onClick={() => setShowForm(true)}
-        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
-      >
-        + เพิ่มผู้เช่าให้ห้องนี้
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button type="button"
+          onClick={() => setShowForm(true)}
+          className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+        >
+          + เพิ่มผู้เช่าให้ห้องนี้
+        </button>
+        <Link
+          href={`/rooms/${room.id}/flyer`}
+          className="rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50"
+        >
+          สร้างป้ายประกาศห้องว่าง
+        </Link>
+      </div>
     );
   }
 
