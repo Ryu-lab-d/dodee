@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './auth';
 import { ORIGIN } from './api';
@@ -216,12 +216,17 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   // server tells us our channel hold is no longer valid (preempted, or nobody's listening).
   const hardStop = useCallback(
     (message: string, playTone: () => void) => {
-      abortRef.current = true;
       holdingRef.current = false;
       if (segmentTimerRef.current) clearTimeout(segmentTimerRef.current);
       if (recorderRef.current && recorderRef.current.state === 'recording') {
+        // Let onstop see the flag and skip sending/re-arming - it's the one that resets it.
+        abortRef.current = true;
         recorderRef.current.stop();
       } else {
+        // No segment mid-flight to abort, so there's nothing for onstop to clear this for -
+        // leaving it true here would silently drop the *next* transmission's first segment
+        // and strand the server thinking we still hold the channel.
+        abortRef.current = false;
         stopStream();
       }
       playTone();
@@ -242,6 +247,11 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
     socket.on('presence', (list: RadioMember[]) => setOnline(list));
+    // Sent only to a socket that just (re)connected mid-transmission, to sync its UI to
+    // "someone's already talking" - deliberately does none of talk:start's side effects
+    // (recent-activity log, missed-count, title flash, notification), since a reconnect
+    // isn't a new transmission and shouldn't be treated or alerted on as one.
+    socket.on('talk:resync', (payload: TalkingUser) => setTalkingUser(payload));
     socket.on('talk:start', (payload: TalkingUser) => {
       setTalkingUser(payload);
       setRecentEvents((prev) =>
@@ -359,27 +369,47 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const isCalledByPrivate =
     !!talkingUser && talkingUser.mode === 'private' && !!user && talkingUser.targetUserId === user.id;
 
+  const value = useMemo<RadioContextValue>(
+    () => ({
+      connected,
+      online,
+      talkingUser,
+      isMine,
+      isCalledByPrivate,
+      busyMessage,
+      notice,
+      micError,
+      selectedTarget,
+      selectTarget,
+      startTalking,
+      startEmergency,
+      stopTalking,
+      recentEvents,
+      missedCount,
+      markSeen,
+    }),
+    [
+      connected,
+      online,
+      talkingUser,
+      isMine,
+      isCalledByPrivate,
+      busyMessage,
+      notice,
+      micError,
+      selectedTarget,
+      selectTarget,
+      startTalking,
+      startEmergency,
+      stopTalking,
+      recentEvents,
+      missedCount,
+      markSeen,
+    ]
+  );
+
   return (
-    <RadioContext.Provider
-      value={{
-        connected,
-        online,
-        talkingUser,
-        isMine,
-        isCalledByPrivate,
-        busyMessage,
-        notice,
-        micError,
-        selectedTarget,
-        selectTarget,
-        startTalking,
-        startEmergency,
-        stopTalking,
-        recentEvents,
-        missedCount,
-        markSeen,
-      }}
-    >
+    <RadioContext.Provider value={value}>
       {children}
     </RadioContext.Provider>
   );

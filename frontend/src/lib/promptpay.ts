@@ -39,13 +39,17 @@ export function buildPromptPayPayload(promptpayId: string, amount?: number): str
 
   const merchantInfo = tlv('00', 'A000000677010111') + proxy;
 
+  // A truthy check on `amount` would treat a legitimate ฿0 invoice the same as "no amount
+  // given" (a static/reusable QR instead of one pinned to that exact total) - checking for
+  // undefined instead keeps 0 a valid, explicit amount.
+  const hasAmount = amount !== undefined;
   const payload =
     tlv('00', '01') +
-    tlv('01', amount ? '12' : '11') +
+    tlv('01', hasAmount ? '12' : '11') +
     tlv('29', merchantInfo) +
     tlv('58', 'TH') +
     tlv('53', '764') +
-    (amount ? tlv('54', amount.toFixed(2)) : '') +
+    (hasAmount ? tlv('54', amount.toFixed(2)) : '') +
     '6304';
 
   return payload + crc16(payload);

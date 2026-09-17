@@ -1,6 +1,7 @@
 const { Invoice, Room, Property, Tenant, MeterReading, UserProperty, Payment } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logActivity } = require('../utils/activityLog');
+const { applyOverdueStatus } = require('../utils/invoiceStatus');
 
 const DUE_DAYS = Number(process.env.INVOICE_DUE_DAYS || 10);
 
@@ -13,17 +14,10 @@ const propertyIdsForUser = async (user) => {
   return assignments.map((a) => a.propertyId);
 };
 
-// Flip issued invoices whose due date has passed to "overdue" before returning them.
-const applyOverdueStatus = async (invoices) => {
-  const today = new Date().toISOString().slice(0, 10);
-  const staleIds = invoices.filter((inv) => inv.status === 'issued' && inv.dueDate < today).map((inv) => inv.id);
-  if (staleIds.length) {
-    await Invoice.update({ status: 'overdue' }, { where: { id: staleIds } });
-    invoices.forEach((inv) => {
-      if (staleIds.includes(inv.id)) inv.status = 'overdue';
-    });
-  }
-  return invoices;
+const defaultDueDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + DUE_DAYS);
+  return d.toISOString().slice(0, 10);
 };
 
 const list = asyncHandler(async (req, res) => {
@@ -98,9 +92,6 @@ const generate = asyncHandler(async (req, res) => {
     const baseRent = Number(room.baseRentPrice);
     const totalAmount = baseRent + waterCharge + electricityCharge + extra;
 
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + DUE_DAYS);
-
     const invoice = await Invoice.create({
       roomId: room.id,
       invoiceDate: new Date().toISOString().slice(0, 10),
@@ -111,7 +102,7 @@ const generate = asyncHandler(async (req, res) => {
       otherCharges: extra,
       totalAmount,
       status: 'issued',
-      dueDate: dueDate.toISOString().slice(0, 10),
+      dueDate: defaultDueDate(),
     });
 
     created.push(invoice);
@@ -146,16 +137,12 @@ const create = asyncHandler(async (req, res) => {
   const water = Number(waterCharge || 0);
   const electricity = Number(electricityCharge || 0);
   const extra = Number(otherCharges || 0);
+  if (base < 0 || water < 0 || electricity < 0 || extra < 0) {
+    return res.status(400).json({ message: 'แต่ละรายการต้องไม่ติดลบ' });
+  }
   const totalAmount = base + water + electricity + extra;
   if (totalAmount <= 0) {
     return res.status(400).json({ message: 'ยอดรวมต้องมากกว่า 0 บาท' });
-  }
-
-  let resolvedDueDate = dueDate;
-  if (!resolvedDueDate) {
-    const d = new Date();
-    d.setDate(d.getDate() + DUE_DAYS);
-    resolvedDueDate = d.toISOString().slice(0, 10);
   }
 
   const invoice = await Invoice.create({
@@ -168,7 +155,7 @@ const create = asyncHandler(async (req, res) => {
     otherCharges: extra,
     totalAmount,
     status: 'issued',
-    dueDate: resolvedDueDate,
+    dueDate: dueDate || defaultDueDate(),
   });
 
   logActivity(req.user, 'create_invoice', `สร้างใบเรียกเก็บด้วยตนเอง ห้อง ${room.roomNumber} งวด ${billingMonth} ฿${totalAmount.toLocaleString()}`);

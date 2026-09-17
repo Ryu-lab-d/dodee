@@ -381,6 +381,13 @@ function CompanyProfileSettings() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+    // The preview below only ever *showed* an error for an invalid PromptPay ID - it never
+    // stopped the save, so a mistyped ID would save silently and every invoice from then on
+    // would just quietly omit its QR with no error anywhere to explain why.
+    if (promptpayId.trim() && !isValidPromptPayId(promptpayId)) {
+      setError('เบอร์พร้อมเพย์ไม่ถูกต้อง กรุณาตรวจสอบก่อนบันทึก');
+      return;
+    }
     setSaving(true);
     try {
       await api.put('/settings/company', { name, address, phone, logoUrl, promptpayId });

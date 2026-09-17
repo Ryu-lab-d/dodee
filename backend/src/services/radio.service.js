@@ -15,6 +15,7 @@ const { logActivity } = require('../utils/activityLog');
 // flood that log with noise nobody wants to read.
 const NORMAL_MAX_MS = 30_000; // safety unlock if a client dies mid-transmission
 const EMERGENCY_MAX_MS = 60_000; // emergencies get more room to explain the situation
+const EMERGENCY_COOLDOWN_MS = 15_000; // one person can't keep re-declaring emergency to hog the channel
 
 const attachRadio = (httpServer) => {
   const io = new Server(httpServer, {
@@ -27,6 +28,7 @@ const attachRadio = (httpServer) => {
   // { socketId, user, mode: 'broadcast'|'private'|'emergency', targetUserId?, targetName? }
   let currentSpeaker = null;
   let releaseTimer = null;
+  const lastEmergencyAt = new Map(); // userId -> timestamp of their last granted emergency
 
   const broadcastPresence = () => {
     io.emit('presence', Array.from(online.values()));
@@ -85,7 +87,13 @@ const attachRadio = (httpServer) => {
     online.set(socket.id, socket.user);
     broadcastPresence();
     if (currentSpeaker) {
-      socket.emit('talk:start', {
+      // A resync for whoever just (re)connected mid-transmission - reconnects happen
+      // constantly in normal use (tab backgrounded then foregrounded, brief wifi drop,
+      // laptop sleep/wake all make socket.io reconnect under the hood), so this must stay
+      // a distinct event from 'talk:start': the client treats a real talk:start as a brand
+      // new call for its missed-badge/notification/title-flash logic, and firing that on
+      // every routine reconnect would double-count and re-alert for a call already in progress.
+      socket.emit('talk:resync', {
         userId: currentSpeaker.user.id,
         name: currentSpeaker.user.name,
         mode: currentSpeaker.mode,
@@ -98,9 +106,27 @@ const attachRadio = (httpServer) => {
       const { targetUserId, emergency } = payload || {};
 
       if (emergency) {
-        // Emergency preempts whoever currently holds the channel - the bumped speaker is
-        // told directly so their UI can stop cleanly instead of transmitting into a lock
-        // they no longer hold.
+        // An emergency already in progress isn't preempted by another one - the channel is
+        // already at maximum urgency, so a second caller just has to wait their turn like
+        // a normal busy signal instead of bumping the first emergency mid-sentence.
+        if (currentSpeaker && currentSpeaker.mode === 'emergency' && currentSpeaker.socketId !== socket.id) {
+          socket.emit('talk:busy', { name: currentSpeaker.user.name });
+          return;
+        }
+        // A per-user cooldown so one person mashing the emergency button can't keep
+        // re-preempting the channel - this is the app's one safety override, so it needs
+        // a floor against accidental or careless spam, not just against malice.
+        const now = Date.now();
+        const last = lastEmergencyAt.get(socket.user.id) || 0;
+        if (now - last < EMERGENCY_COOLDOWN_MS) {
+          socket.emit('talk:busy', { name: socket.user.name });
+          return;
+        }
+        lastEmergencyAt.set(socket.user.id, now);
+
+        // Otherwise emergency preempts whoever currently holds the channel - the bumped
+        // speaker is told directly so their UI can stop cleanly instead of transmitting
+        // into a lock they no longer hold.
         if (currentSpeaker && currentSpeaker.socketId !== socket.id) {
           io.to(currentSpeaker.socketId).emit('talk:preempted');
         }
@@ -114,6 +140,7 @@ const attachRadio = (httpServer) => {
       }
 
       if (targetUserId) {
+        if (targetUserId === socket.user.id) return; // the UI never offers calling yourself
         const targetMember = Array.from(online.values()).find((m) => m.id === targetUserId);
         if (!targetMember) {
           socket.emit('talk:target-offline');
@@ -160,12 +187,16 @@ const attachRadio = (httpServer) => {
       if (currentSpeaker.socketId === socket.id) {
         forceRelease();
       } else if (currentSpeaker.mode === 'private' && currentSpeaker.targetUserId === socket.user.id) {
-        // The person being called left mid-call - let the caller know nobody's listening
-        // anymore instead of leaving them talking into a dead channel.
-        const callerId = currentSpeaker.user.id;
-        io.to(currentSpeaker.socketId).emit('talk:target-offline');
-        clearSpeaker();
-        io.emit('talk:end', { userId: callerId });
+        // Only end the call once the callee has no other connected tab/device left - the
+        // owner (or anyone) commonly has DoDee open on both phone and desktop, and closing
+        // one shouldn't drop a call they're still listening to on the other.
+        const stillReachable = socketIdsForUser(currentSpeaker.targetUserId).length > 0;
+        if (!stillReachable) {
+          const callerId = currentSpeaker.user.id;
+          io.to(currentSpeaker.socketId).emit('talk:target-offline');
+          clearSpeaker();
+          io.emit('talk:end', { userId: callerId });
+        }
       }
     });
   });
